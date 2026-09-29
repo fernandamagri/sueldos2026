@@ -30,6 +30,19 @@ body {
 .app-header h1 { margin: 0 0 4px; font-size: 1.4rem; }
 .subtitle { margin: 0; opacity: 0.85; font-size: 0.95rem; }
 
+.app-nav { display: flex; justify-content: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.app-nav a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.85rem;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  opacity: 0.8;
+}
+.app-nav a.activo { background: rgba(255, 255, 255, 0.18); opacity: 1; font-weight: 600; }
+.app-nav a:hover { opacity: 1; }
+
 .container {
   max-width: 960px;
   margin: 0 auto;

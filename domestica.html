@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sueldos 2026 — Personal de Casas Particulares</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="app-header">
+  <nav class="app-nav">
+    <a href="index.html">Comercio · Categoría A</a>
+    <a href="domestica.html" class="activo">Casas particulares</a>
+  </nav>
+  <h1>Calculadora de Sueldo · Personal de Casas Particulares (Ley 26.844)</h1>
+  <p class="subtitle">Trabajo por horas, con retiro (sin cama adentro) · Liquidación mensual y registro de pagos</p>
+</header>
+
+<main class="container">
+
+  <!-- DATOS DE LA EMPLEADA -->
+  <section class="card" id="seccion-empleada">
+    <h2>Datos de la empleada</h2>
+    <div class="grid grid-3">
+      <label>Nombre y apellido
+        <input type="text" id="emp-nombre" placeholder="Ej: María López">
+      </label>
+      <label>Categoría
+        <select id="emp-categoria">
+          <option value="generales">Personal para tareas generales</option>
+          <option value="especificas">Personal para tareas específicas</option>
+          <option value="cuidado">Asistencia y cuidado de personas</option>
+          <option value="caseros">Caseros/as</option>
+          <option value="supervisor">Supervisor/a de personal</option>
+        </select>
+      </label>
+      <label>Fecha de ingreso
+        <input type="date" id="emp-ingreso">
+      </label>
+    </div>
+    <p class="hint">Modalidad: con retiro (sin cama adentro) — trabaja por hora y no vive en el domicilio.</p>
+    <button id="btn-guardar-empleada" class="btn btn-secondary">Guardar datos de la empleada</button>
+  </section>
+
+  <!-- PARÁMETROS -->
+  <section class="card" id="seccion-config">
+    <h2>Parámetros de liquidación</h2>
+    <p class="hint">
+      El valor hora y los aportes se actualizan periódicamente por resolución de la CNTCP / ARCA.
+      Verificá siempre el valor vigente antes de liquidar un período.
+    </p>
+    <div class="grid grid-3">
+      <label>% Antigüedad por año
+        <input type="number" id="cfg-antiguedad" step="0.01" value="1">
+      </label>
+      <label>% Aporte jubilatorio personal (si se retiene)
+        <input type="number" id="cfg-jubilacion" step="0.01" value="11">
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="cfg-retener-jubilacion">
+        Retener aporte jubilatorio personal del sueldo
+      </label>
+    </div>
+    <p class="hint">
+      Por defecto la app <strong>no</strong> descuenta nada del sueldo de la empleada: el aporte y la
+      contribución mensual que corresponde declarar y pagar a ARCA (jubilación, obra social y ART) es,
+      salvo acuerdo en contrario, un costo a cargo del empleador y se muestra abajo solo como referencia,
+      separado del neto que cobra la empleada. Activá esta casilla únicamente si acordaste retenerle a la
+      empleada su aporte personal.
+    </p>
+    <button id="btn-guardar-config" class="btn btn-secondary">Guardar parámetros</button>
+  </section>
+
+  <!-- CALCULADORA / NUEVO PAGO -->
+  <section class="card" id="seccion-calculadora">
+    <h2>Liquidar período</h2>
+    <div class="grid grid-3">
+      <label>Período (mes/año)
+        <input type="month" id="pago-periodo">
+      </label>
+      <label>Valor hora vigente
+        <input type="number" id="pago-valorhora" step="0.01" min="0" placeholder="Ingresá el valor hora vigente">
+      </label>
+      <label class="label-con-boton">
+        &nbsp;
+        <button type="button" id="btn-sugerir-valorhora" class="btn btn-secondary">Sugerir valor hora actualizado</button>
+      </label>
+      <label>Horas trabajadas en el mes
+        <input type="number" id="pago-horas" step="0.5" min="0" value="52">
+      </label>
+      <label>Antigüedad (años, calculada)
+        <input type="number" id="pago-antiguedad-anios" step="1" min="0" readonly>
+      </label>
+      <label>Extra remunerativo (opcional)
+        <input type="number" id="pago-extra" step="0.01" min="0" value="0">
+      </label>
+      <label>Adicional no remunerativo (opcional)
+        <input type="number" id="pago-noremun" step="0.01" min="0" value="0">
+      </label>
+      <label>Horas semanales contratadas (para el aporte a ARCA)
+        <select id="pago-bracket-horas">
+          <option value="menos12">Menos de 12 hs/semana</option>
+          <option value="12a15">De 12 a 15 hs/semana</option>
+          <option value="16omas">16 hs/semana o más</option>
+        </select>
+      </label>
+    </div>
+
+    <p id="sugerencia-valorhora-info" class="hint oculto"></p>
+
+    <button id="btn-calcular" class="btn btn-primary">Calcular</button>
+
+    <div id="resultado" class="resultado oculto">
+      <h3>Resultado del período</h3>
+      <table class="tabla-resultado">
+        <tbody>
+          <tr><td>Horas × valor hora</td><td id="res-remuneracion"></td></tr>
+          <tr><td>Antigüedad (<span id="res-anios"></span> años)</td><td id="res-antiguedad"></td></tr>
+          <tr><td>Extra remunerativo</td><td id="res-extra"></td></tr>
+          <tr class="fila-subtotal"><td>Remuneración bruta</td><td id="res-bruto"></td></tr>
+          <tr id="fila-desc-jubilacion"><td>Aporte jubilatorio retenido</td><td id="res-desc-jubilacion"></td></tr>
+          <tr><td>Adicional no remunerativo</td><td id="res-noremun"></td></tr>
+          <tr class="fila-total"><td>Neto a cobrar por la empleada</td><td id="res-neto"></td></tr>
+        </tbody>
+      </table>
+      <p class="hint">
+        Aporte y contribución de referencia a pagar a ARCA por esta empleada (jubilación + obra social + ART,
+        a cargo del empleador salvo acuerdo distinto): <strong id="res-aporte-arca"></strong>
+        <span id="res-aporte-arca-info"></span>
+      </p>
+      <button id="btn-registrar-pago" class="btn btn-primary">Registrar este pago</button>
+    </div>
+  </section>
+
+  <!-- ESCALA DE REFERENCIA -->
+  <section class="card" id="seccion-escala">
+    <h2>Escala de referencia (valores hora sugeridos)</h2>
+    <p class="hint">
+      Valores de partida cargados el 29/09/2026 desde fuentes públicas (iProfesional, CNTCP) para la escala
+      "con retiro" vigente en septiembre de 2026. Verificalos contra la resolución oficial de la CNTCP y
+      agregá una fila nueva con cada actualización.
+    </p>
+    <div class="tabla-scroll">
+      <table class="tabla-registro" id="tabla-escala">
+        <thead>
+          <tr>
+            <th>Categoría</th>
+            <th>Vigente desde</th>
+            <th>Valor hora</th>
+            <th>Fuente</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody-escala"></tbody>
+      </table>
+    </div>
+    <div class="grid grid-3 form-escala">
+      <label>Categoría
+        <select id="escala-categoria">
+          <option value="generales">Personal para tareas generales</option>
+          <option value="especificas">Personal para tareas específicas</option>
+          <option value="cuidado">Asistencia y cuidado de personas</option>
+          <option value="caseros">Caseros/as</option>
+          <option value="supervisor">Supervisor/a de personal</option>
+        </select>
+      </label>
+      <label>Vigente desde
+        <input type="month" id="escala-vigencia">
+      </label>
+      <label>Valor hora
+        <input type="number" id="escala-valorhora" step="0.01" min="0">
+      </label>
+      <label>Fuente
+        <input type="text" id="escala-fuente" placeholder="Ej: Resolución CNTCP oct-2026">
+      </label>
+    </div>
+    <button id="btn-agregar-escala" class="btn btn-secondary">Agregar fila a la escala</button>
+  </section>
+
+  <!-- REGISTRO DE PAGOS -->
+  <section class="card" id="seccion-registro">
+    <h2>Registro de pagos mensuales</h2>
+    <div class="tabla-scroll">
+      <table class="tabla-registro" id="tabla-pagos">
+        <thead>
+          <tr>
+            <th>Período</th>
+            <th>Horas</th>
+            <th>Valor hora</th>
+            <th>Antigüedad</th>
+            <th>Bruto</th>
+            <th>Retención</th>
+            <th>Neto</th>
+            <th>Registrado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody-pagos"></tbody>
+      </table>
+    </div>
+    <p id="sin-pagos" class="hint">Todavía no registraste ningún pago.</p>
+    <div class="acciones-registro">
+      <button id="btn-exportar" class="btn btn-secondary">Exportar registro (CSV)</button>
+      <button id="btn-borrar-todo" class="btn btn-danger">Borrar todo el registro</button>
+    </div>
+  </section>
+
+</main>
+
+<footer class="app-footer">
+  <p>
+    Los valores de hora, antigüedad y aportes deben verificarse contra la resolución vigente de la CNTCP y
+    la tabla de aportes y contribuciones de ARCA. Esta calculadora es una herramienta de apoyo y no
+    reemplaza la liquidación oficial de recibo de sueldo ni asesoramiento profesional.
+  </p>
+</footer>
+
+<script src="js/domestica-app.js"></script>
+</body>
+</html>
