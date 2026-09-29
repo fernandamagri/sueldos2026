@@ -33,7 +33,11 @@ function cargarEstado() {
 }
 
 function guardarEstado() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(estado));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(estado));
+  } catch (e) {
+    console.warn("No se pudo guardar el estado (almacenamiento no disponible).", e);
+  }
 }
 
 let estado = cargarEstado();
