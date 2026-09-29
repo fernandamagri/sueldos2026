@@ -2,8 +2,45 @@
 
 const STORAGE_KEY = "sueldos2026.comercio-categoria-a";
 
+const RAMAS = {
+  administrativo: "Administrativo A",
+  maestranza: "Maestranza A",
+  vendedor: "Vendedor A",
+};
+
+// Básicos de referencia cargados desde fuentes públicas (Infobae, FAECYS, CalculAR)
+// el 29/09/2026, correspondientes a la escala CCT 130/75 vigente en septiembre 2026
+// (tercera cuota del acuerdo julio-septiembre 2026, +5,7% acumulado). Son un punto de
+// partida: agregá o corregí filas acá a medida que salgan nuevas circulares de FAECYS.
+const ESCALA_REFERENCIA_SEED = [
+  {
+    id: "seed-administrativo-2026-09",
+    rama: "administrativo",
+    vigenciaDesde: "2026-09",
+    basico: 1196632,
+    noRemunerativo: 120000,
+    fuente: "Infobae / FAECYS (CCT 130/75, set-2026)",
+  },
+  {
+    id: "seed-maestranza-2026-09",
+    rama: "maestranza",
+    vigenciaDesde: "2026-09",
+    basico: 1183900,
+    noRemunerativo: 120000,
+    fuente: "CalculAR (CCT 130/75, set-2026)",
+  },
+  {
+    id: "seed-vendedor-2026-09",
+    rama: "vendedor",
+    vigenciaDesde: "2026-09",
+    basico: 1200875,
+    noRemunerativo: 120000,
+    fuente: "Búsqueda pública (CCT 130/75, set-2026)",
+  },
+];
+
 const DEFAULT_STATE = {
-  empleado: { nombre: "", categoria: "Comercio — Categoría A", ingreso: "" },
+  empleado: { nombre: "", categoria: "Comercio — Categoría A", rama: "administrativo", ingreso: "" },
   config: {
     antiguedadPct: 1,
     presentismoPct: 8.33,
@@ -14,6 +51,7 @@ const DEFAULT_STATE = {
     sindicatoPct: 2.5,
   },
   pagos: [], // { id, periodo, basico, antiguedadAnios, antiguedadMonto, presentismoMonto, bruto, descJubilacion, descLey19032, descObraSocial, descSindicato, totalDescuentos, noRemunerativo, neto, registradoEn }
+  escalaReferencia: ESCALA_REFERENCIA_SEED, // básicos sugeridos por rama y período de vigencia
 };
 
 function cargarEstado() {
@@ -25,6 +63,9 @@ function cargarEstado() {
       empleado: { ...DEFAULT_STATE.empleado, ...(parsed.empleado || {}) },
       config: { ...DEFAULT_STATE.config, ...(parsed.config || {}) },
       pagos: Array.isArray(parsed.pagos) ? parsed.pagos : [],
+      escalaReferencia: Array.isArray(parsed.escalaReferencia)
+        ? parsed.escalaReferencia
+        : structuredClone(ESCALA_REFERENCIA_SEED),
     };
   } catch (e) {
     console.warn("No se pudo leer el estado guardado, se usa uno nuevo.", e);
@@ -62,6 +103,7 @@ function calcularAniosAntiguedad(fechaIngreso, periodoAAAAMM) {
 
 function poblarFormulario() {
   $("emp-nombre").value = estado.empleado.nombre;
+  $("emp-rama").value = estado.empleado.rama;
   $("emp-ingreso").value = estado.empleado.ingreso;
 
   $("cfg-antiguedad").value = estado.config.antiguedadPct;
@@ -85,6 +127,7 @@ function actualizarAniosAntiguedad() {
 
 function guardarDatosEmpleado() {
   estado.empleado.nombre = $("emp-nombre").value.trim();
+  estado.empleado.rama = $("emp-rama").value;
   estado.empleado.ingreso = $("emp-ingreso").value;
   guardarEstado();
   actualizarAniosAntiguedad();
@@ -266,16 +309,107 @@ function borrarTodoElRegistro() {
   renderTablaPagos();
 }
 
+function buscarBasicoSugerido(rama, periodo) {
+  return estado.escalaReferencia
+    .filter((e) => e.rama === rama && e.vigenciaDesde <= periodo)
+    .sort((a, b) => b.vigenciaDesde.localeCompare(a.vigenciaDesde))[0] || null;
+}
+
+function onSugerirBasico() {
+  const rama = $("emp-rama").value;
+  const periodo = $("pago-periodo").value;
+  const info = $("sugerencia-basico-info");
+
+  if (!periodo) {
+    alert("Elegí primero el período a liquidar.");
+    return;
+  }
+
+  const sugerido = buscarBasicoSugerido(rama, periodo);
+  if (!sugerido) {
+    info.textContent = `No hay un básico de referencia cargado para ${RAMAS[rama]} en ${periodo}. Agregá una fila en "Escala de referencia" o ingresá el básico manualmente.`;
+    info.classList.remove("oculto");
+    return;
+  }
+
+  $("pago-basico").value = sugerido.basico;
+  $("pago-noremun").value = sugerido.noRemunerativo;
+  info.textContent = `Sugerido para ${RAMAS[rama]}: básico ${fmtMoneda(sugerido.basico)} + no remunerativo ${fmtMoneda(sugerido.noRemunerativo)}, vigente desde ${sugerido.vigenciaDesde} (fuente: ${sugerido.fuente}). Verificalo contra la circular oficial de FAECYS antes de liquidar.`;
+  info.classList.remove("oculto");
+}
+
+function renderTablaEscala() {
+  const tbody = $("tbody-escala");
+  tbody.innerHTML = "";
+
+  const filas = [...estado.escalaReferencia].sort((a, b) => b.vigenciaDesde.localeCompare(a.vigenciaDesde));
+
+  for (const e of filas) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${RAMAS[e.rama] || e.rama}</td>
+      <td>${e.vigenciaDesde}</td>
+      <td>${fmtMoneda(e.basico)}</td>
+      <td>${fmtMoneda(e.noRemunerativo)}</td>
+      <td>${e.fuente}</td>
+      <td><button class="link-borrar" data-id="${e.id}">Eliminar</button></td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  tbody.querySelectorAll(".link-borrar").forEach((btn) => {
+    btn.addEventListener("click", () => eliminarEscala(btn.dataset.id));
+  });
+}
+
+function eliminarEscala(id) {
+  if (!confirm("¿Eliminar esta fila de la escala de referencia?")) return;
+  estado.escalaReferencia = estado.escalaReferencia.filter((e) => e.id !== id);
+  guardarEstado();
+  renderTablaEscala();
+}
+
+function onAgregarEscala() {
+  const rama = $("escala-rama").value;
+  const vigenciaDesde = $("escala-vigencia").value;
+  const basico = parseFloat($("escala-basico").value) || 0;
+  const noRemunerativo = parseFloat($("escala-noremun").value) || 0;
+  const fuente = $("escala-fuente").value.trim() || "Ingresado manualmente";
+
+  if (!vigenciaDesde || basico <= 0) {
+    alert("Completá al menos la vigencia y el básico.");
+    return;
+  }
+
+  estado.escalaReferencia.push({
+    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+    rama,
+    vigenciaDesde,
+    basico,
+    noRemunerativo,
+    fuente,
+  });
+  guardarEstado();
+  renderTablaEscala();
+
+  $("escala-basico").value = "";
+  $("escala-noremun").value = "";
+  $("escala-fuente").value = "";
+}
+
 function init() {
   poblarFormulario();
   renderTablaPagos();
+  renderTablaEscala();
 
   $("btn-guardar-empleado").addEventListener("click", guardarDatosEmpleado);
   $("btn-guardar-config").addEventListener("click", guardarConfig);
+  $("btn-sugerir-basico").addEventListener("click", onSugerirBasico);
   $("btn-calcular").addEventListener("click", onCalcular);
   $("btn-registrar-pago").addEventListener("click", onRegistrarPago);
   $("btn-exportar").addEventListener("click", exportarCSV);
   $("btn-borrar-todo").addEventListener("click", borrarTodoElRegistro);
+  $("btn-agregar-escala").addEventListener("click", onAgregarEscala);
   $("pago-periodo").addEventListener("change", actualizarAniosAntiguedad);
 }
 

@@ -63,7 +63,8 @@ label {
 input[type="text"],
 input[type="date"],
 input[type="month"],
-input[type="number"] {
+input[type="number"],
+select {
   font-size: 0.95rem;
   padding: 8px 10px;
   border: 1px solid var(--color-border);
@@ -98,7 +99,12 @@ input[readonly] { background: #f0f2f4; color: var(--color-muted); }
 .btn-danger:hover { background: #f5d9d3; }
 
 .resultado { margin-top: 18px; border-top: 1px solid var(--color-border); padding-top: 16px; }
-.resultado.oculto { display: none; }
+.oculto { display: none; }
+
+.label-con-boton { justify-content: flex-end; }
+.label-con-boton .btn { width: 100%; }
+
+.form-escala { margin-top: 16px; }
 
 .tabla-resultado { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
 .tabla-resultado td { padding: 6px 4px; font-size: 0.92rem; }

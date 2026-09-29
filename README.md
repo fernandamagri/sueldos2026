@@ -27,12 +27,20 @@ python3 -m http.server 8000
    jubilación, ley 19.032, obra social y cuota sindical (opcional). Estos
    valores deben verificarse contra la escala salarial y las alícuotas
    vigentes publicadas por FAECYS / CCT 130/75, ya que se actualizan por
-   paritaria — **la aplicación no trae valores precargados** porque cambian
-   con frecuencia y no hay que asumir que un monto fijo siga vigente.
-3. **Liquidación del período**: se ingresa el sueldo básico de categoría
-   vigente para ese mes y si corresponde presentismo; la app calcula
-   antigüedad, remuneración bruta, descuentos y el neto a cobrar.
-4. **Registro de pagos**: cada liquidación calculada se puede guardar como un
+   paritaria.
+3. **Escala de referencia (básicos sugeridos)**: una tabla editable de
+   básicos por rama (Administrativo A, Maestranza A, Vendedor A) y fecha de
+   vigencia. Viene precargada con los valores de septiembre de 2026
+   relevados de fuentes públicas (Infobae, FAECYS, CalculAR) el 29/09/2026,
+   pero **hay que verificarlos contra la circular oficial de FAECYS** y
+   agregar una fila nueva cada vez que salga una actualización de paritaria
+   para que la sugerencia se mantenga al día.
+4. **Liquidación del período**: se elige el período y, con el botón
+   "Sugerir básico actualizado", la app completa el básico y el adicional no
+   remunerativo según la rama del empleado y la fila vigente más reciente de
+   la escala de referencia (siempre editable a mano). Calcula antigüedad,
+   presentismo, remuneración bruta, descuentos y el neto a cobrar.
+5. **Registro de pagos**: cada liquidación calculada se puede guardar como un
    pago del mes. Queda en una tabla histórica editable (se puede eliminar un
    registro) y exportable a CSV.
 

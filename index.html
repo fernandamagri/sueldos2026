@@ -21,8 +21,12 @@
       <label>Nombre y apellido
         <input type="text" id="emp-nombre" placeholder="Ej: Juan Pérez">
       </label>
-      <label>Categoría
-        <input type="text" id="emp-categoria" value="Comercio — Categoría A" readonly>
+      <label>Puesto / rama (Categoría A)
+        <select id="emp-rama">
+          <option value="administrativo">Administrativo A</option>
+          <option value="maestranza">Maestranza A</option>
+          <option value="vendedor">Vendedor A</option>
+        </select>
       </label>
       <label>Fecha de ingreso
         <input type="date" id="emp-ingreso">
@@ -75,6 +79,10 @@
       <label>Sueldo básico de categoría (vigente en el período)
         <input type="number" id="pago-basico" step="0.01" min="0" placeholder="Ingresá el básico vigente">
       </label>
+      <label class="label-con-boton">
+        &nbsp;
+        <button type="button" id="btn-sugerir-basico" class="btn btn-secondary">Sugerir básico actualizado</button>
+      </label>
       <label>Antigüedad (años, calculada)
         <input type="number" id="pago-antiguedad-anios" step="1" min="0" readonly>
       </label>
@@ -86,6 +94,8 @@
         <input type="number" id="pago-noremun" step="0.01" min="0" value="0">
       </label>
     </div>
+
+    <p id="sugerencia-basico-info" class="hint oculto"></p>
 
     <button id="btn-calcular" class="btn btn-primary">Calcular</button>
 
@@ -108,6 +118,54 @@
       </table>
       <button id="btn-registrar-pago" class="btn btn-primary">Registrar este pago</button>
     </div>
+  </section>
+
+  <!-- ESCALA DE REFERENCIA -->
+  <section class="card" id="seccion-escala">
+    <h2>Escala de referencia (básicos sugeridos)</h2>
+    <p class="hint">
+      Valores de partida cargados el 29/09/2026 desde fuentes públicas (Infobae, FAECYS, CalculAR) para la
+      escala CCT 130/75 de septiembre de 2026. Verificalos contra la circular oficial de FAECYS y agregá una
+      fila nueva cada vez que salga una actualización de paritaria, para que la sugerencia se mantenga al día.
+    </p>
+    <div class="tabla-scroll">
+      <table class="tabla-registro" id="tabla-escala">
+        <thead>
+          <tr>
+            <th>Rama</th>
+            <th>Vigente desde</th>
+            <th>Básico</th>
+            <th>No remunerativo</th>
+            <th>Fuente</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody-escala">
+        </tbody>
+      </table>
+    </div>
+    <div class="grid grid-3 form-escala">
+      <label>Rama
+        <select id="escala-rama">
+          <option value="administrativo">Administrativo A</option>
+          <option value="maestranza">Maestranza A</option>
+          <option value="vendedor">Vendedor A</option>
+        </select>
+      </label>
+      <label>Vigente desde
+        <input type="month" id="escala-vigencia">
+      </label>
+      <label>Básico
+        <input type="number" id="escala-basico" step="0.01" min="0">
+      </label>
+      <label>No remunerativo
+        <input type="number" id="escala-noremun" step="0.01" min="0" value="0">
+      </label>
+      <label>Fuente
+        <input type="text" id="escala-fuente" placeholder="Ej: Circular FAECYS oct-2026">
+      </label>
+    </div>
+    <button id="btn-agregar-escala" class="btn btn-secondary">Agregar fila a la escala</button>
   </section>
 
   <!-- REGISTRO DE PAGOS -->
