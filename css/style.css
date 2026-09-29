@@ -116,7 +116,7 @@ input[readonly] { background: #f0f2f4; color: var(--color-muted); }
 .tabla-registro { width: 100%; border-collapse: collapse; font-size: 0.88rem; min-width: 640px; }
 .tabla-registro th, .tabla-registro td { padding: 8px; text-align: left; border-bottom: 1px solid var(--color-border); }
 .tabla-registro th { color: var(--color-muted); font-weight: 600; }
-.tabla-registro td:nth-child(n+2):nth-child(-n+6) { text-align: right; font-variant-numeric: tabular-nums; }
+.tabla-registro td:nth-child(n+2):nth-child(-n+7) { text-align: right; font-variant-numeric: tabular-nums; }
 
 .acciones-registro { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 

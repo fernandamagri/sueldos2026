@@ -38,8 +38,11 @@ python3 -m http.server 8000
 4. **Liquidación del período**: se elige el período y, con el botón
    "Sugerir básico actualizado", la app completa el básico y el adicional no
    remunerativo según la rama del empleado y la fila vigente más reciente de
-   la escala de referencia (siempre editable a mano). Calcula antigüedad,
-   presentismo, remuneración bruta, descuentos y el neto a cobrar.
+   la escala de referencia (siempre editable a mano). Además del básico se
+   puede cargar un **extra remunerativo** (comisión, premio, bono, etc.),
+   que se suma a la remuneración bruta y sí tributa descuentos, a diferencia
+   del adicional no remunerativo. Calcula antigüedad, presentismo,
+   remuneración bruta, descuentos y el neto a cobrar.
 5. **Registro de pagos**: cada liquidación calculada se puede guardar como un
    pago del mes. Queda en una tabla histórica editable (se puede eliminar un
    registro) y exportable a CSV.

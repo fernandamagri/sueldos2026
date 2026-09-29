@@ -93,6 +93,9 @@
       <label>Adicional no remunerativo (opcional)
         <input type="number" id="pago-noremun" step="0.01" min="0" value="0">
       </label>
+      <label>Extra remunerativo (comisión, premio, bono, etc.)
+        <input type="number" id="pago-extra" step="0.01" min="0" value="0">
+      </label>
     </div>
 
     <p id="sugerencia-basico-info" class="hint oculto"></p>
@@ -106,6 +109,7 @@
           <tr><td>Sueldo básico</td><td id="res-basico"></td></tr>
           <tr><td>Antigüedad (<span id="res-anios"></span> años)</td><td id="res-antiguedad"></td></tr>
           <tr><td>Presentismo</td><td id="res-presentismo"></td></tr>
+          <tr><td>Extra remunerativo</td><td id="res-extra"></td></tr>
           <tr class="fila-subtotal"><td>Remuneración bruta</td><td id="res-bruto"></td></tr>
           <tr><td>Descuento jubilación</td><td id="res-desc-jubilacion"></td></tr>
           <tr><td>Descuento ley 19.032</td><td id="res-desc-ley"></td></tr>
@@ -178,6 +182,7 @@
             <th>Período</th>
             <th>Básico</th>
             <th>Antigüedad</th>
+            <th>Extra</th>
             <th>Bruto</th>
             <th>Descuentos</th>
             <th>Neto</th>

@@ -151,6 +151,7 @@ function calcularLiquidacion() {
   const basico = parseFloat($("pago-basico").value) || 0;
   const cobraPresentismo = $("pago-presentismo").checked;
   const noRemunerativo = parseFloat($("pago-noremun").value) || 0;
+  const extraRemunerativo = parseFloat($("pago-extra").value) || 0;
 
   if (!periodo) {
     alert("Elegí el período a liquidar.");
@@ -166,7 +167,7 @@ function calcularLiquidacion() {
   const baseParaPresentismo = basico + antiguedadMonto;
   const presentismoMonto = cobraPresentismo ? baseParaPresentismo * (estado.config.presentismoPct / 100) : 0;
 
-  const bruto = basico + antiguedadMonto + presentismoMonto;
+  const bruto = basico + antiguedadMonto + presentismoMonto + extraRemunerativo;
 
   const descJubilacion = bruto * (estado.config.jubilacionPct / 100);
   const descLey19032 = bruto * (estado.config.ley19032Pct / 100);
@@ -182,6 +183,7 @@ function calcularLiquidacion() {
     antiguedadAnios,
     antiguedadMonto,
     presentismoMonto,
+    extraRemunerativo,
     bruto,
     descJubilacion,
     descLey19032,
@@ -204,6 +206,7 @@ function onCalcular() {
   $("res-anios").textContent = r.antiguedadAnios;
   $("res-antiguedad").textContent = fmtMoneda(r.antiguedadMonto);
   $("res-presentismo").textContent = fmtMoneda(r.presentismoMonto);
+  $("res-extra").textContent = fmtMoneda(r.extraRemunerativo);
   $("res-bruto").textContent = fmtMoneda(r.bruto);
   $("res-desc-jubilacion").textContent = fmtMoneda(r.descJubilacion);
   $("res-desc-ley").textContent = fmtMoneda(r.descLey19032);
@@ -261,6 +264,7 @@ function renderTablaPagos() {
       <td>${p.periodo}</td>
       <td>${fmtMoneda(p.basico)}</td>
       <td>${fmtMoneda(p.antiguedadMonto)}</td>
+      <td>${fmtMoneda(p.extraRemunerativo)}</td>
       <td>${fmtMoneda(p.bruto)}</td>
       <td>${fmtMoneda(p.totalDescuentos)}</td>
       <td>${fmtMoneda(p.neto)}</td>
@@ -281,13 +285,13 @@ function exportarCSV() {
     return;
   }
   const encabezados = [
-    "periodo", "basico", "antiguedad_anios", "antiguedad_monto", "presentismo_monto",
+    "periodo", "basico", "antiguedad_anios", "antiguedad_monto", "presentismo_monto", "extra_remunerativo",
     "bruto", "desc_jubilacion", "desc_ley19032", "desc_obra_social", "desc_sindicato",
     "total_descuentos", "no_remunerativo", "neto", "registrado_en",
   ];
   const filas = estado.pagos.map((p) =>
     [
-      p.periodo, p.basico, p.antiguedadAnios, p.antiguedadMonto, p.presentismoMonto,
+      p.periodo, p.basico, p.antiguedadAnios, p.antiguedadMonto, p.presentismoMonto, p.extraRemunerativo,
       p.bruto, p.descJubilacion, p.descLey19032, p.descObraSocial, p.descSindicato,
       p.totalDescuentos, p.noRemunerativo, p.neto, p.registradoEn,
     ].join(",")
