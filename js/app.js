@@ -123,7 +123,7 @@ function poblarFormulario() {
 }
 
 function actualizarAniosAntiguedad() {
-  const anios = calcularAniosAntiguedad(estado.empleado.ingreso, $("pago-periodo").value);
+  const anios = calcularAniosAntiguedad($("emp-ingreso").value, $("pago-periodo").value);
   $("pago-antiguedad-anios").value = anios;
 }
 
@@ -185,7 +185,7 @@ function calcularLiquidacion() {
     return null;
   }
 
-  const antiguedadAnios = calcularAniosAntiguedad(estado.empleado.ingreso, periodo);
+  const antiguedadAnios = calcularAniosAntiguedad($("emp-ingreso").value, periodo);
   const antiguedadMonto = basico * (estado.config.antiguedadPct / 100) * antiguedadAnios;
   const baseParaPresentismo = basico + antiguedadMonto;
   const presentismoMonto = cobraPresentismo ? baseParaPresentismo * (estado.config.presentismoPct / 100) : 0;
@@ -526,6 +526,7 @@ function init() {
     actualizarAniosAntiguedad();
     actualizarInfoAdelantosPeriodo();
   });
+  $("emp-ingreso").addEventListener("change", actualizarAniosAntiguedad);
 }
 
 document.addEventListener("DOMContentLoaded", init);
