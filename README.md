@@ -97,6 +97,16 @@ Pensada para una empleada que trabaja por hora y no vive en el domicilio
 6. **Registro de pagos**: igual que en la calculadora de Comercio, con
    exportación a CSV.
 
+## Eliminar filas
+
+Cualquier fila cargada (pagos registrados, adelantos, filas de la escala de
+referencia) se puede eliminar con el botón "Eliminar" de esa fila: un primer
+clic pide confirmación ("¿Confirmar?") y un segundo clic, dentro de los
+siguientes segundos, la borra. El botón "Borrar todo el registro" de pagos
+funciona igual. Las apps no usan los diálogos `confirm()`/`alert()` del
+navegador para que esto funcione también dentro de vistas previas o
+visores embebidos que no los muestran.
+
 ## Importante
 
 Estas herramientas son una **ayuda de cálculo aproximada** y no reemplazan

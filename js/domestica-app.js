@@ -84,6 +84,43 @@ const $ = (id) => document.getElementById(id);
 const fmtMoneda = (n) =>
   new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", minimumFractionDigits: 2 }).format(n || 0);
 
+let toastTimeout = null;
+function mostrarMensaje(texto) {
+  const toast = $("app-toast");
+  toast.textContent = texto;
+  toast.classList.remove("oculto");
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => toast.classList.add("oculto"), 3500);
+}
+
+// Confirmación en dos pasos dentro de la propia página (no usamos confirm()/alert()
+// del navegador porque algunos visores, como el de vista previa de artifacts, no los
+// muestran y devuelven siempre "cancelar" sin avisar).
+function iniciarConfirmacion(btn, textoConfirmar) {
+  if (!btn.dataset.textoOriginal) btn.dataset.textoOriginal = btn.textContent;
+  btn.dataset.confirmando = "1";
+  btn.textContent = textoConfirmar;
+  btn.classList.add("btn-confirmando");
+  clearTimeout(btn._confirmTimeout);
+  btn._confirmTimeout = setTimeout(() => finalizarConfirmacion(btn), 4000);
+}
+
+function finalizarConfirmacion(btn) {
+  clearTimeout(btn._confirmTimeout);
+  btn.dataset.confirmando = "0";
+  if (btn.dataset.textoOriginal) btn.textContent = btn.dataset.textoOriginal;
+  btn.classList.remove("btn-confirmando");
+}
+
+function manejarClickConfirmable(btn, textoConfirmar, alConfirmar) {
+  if (btn.dataset.confirmando === "1") {
+    finalizarConfirmacion(btn);
+    alConfirmar();
+  } else {
+    iniciarConfirmacion(btn, textoConfirmar);
+  }
+}
+
 function calcularAniosAntiguedad(fechaIngreso, periodoAAAAMM) {
   if (!fechaIngreso || !periodoAAAAMM) return 0;
   const anclaIngreso = fechaIngreso < ANTIGUEDAD_FECHA_ANCLA ? ANTIGUEDAD_FECHA_ANCLA : fechaIngreso;
@@ -144,7 +181,7 @@ function guardarDatosEmpleada() {
   estado.empleada.ingreso = $("emp-ingreso").value;
   guardarEstado();
   actualizarAniosAntiguedad();
-  alert("Datos de la empleada guardados.");
+  mostrarMensaje("Datos de la empleada guardados.");
 }
 
 function guardarConfig() {
@@ -152,7 +189,7 @@ function guardarConfig() {
   estado.config.jubilacionPct = parseFloat($("cfg-jubilacion").value) || 0;
   estado.config.retenerJubilacion = $("cfg-retener-jubilacion").checked;
   guardarEstado();
-  alert("Parámetros guardados.");
+  mostrarMensaje("Parámetros guardados.");
 }
 
 function buscarValorHoraSugerido(categoria, periodo) {
@@ -167,7 +204,7 @@ function onSugerirValorHora() {
   const info = $("sugerencia-valorhora-info");
 
   if (!periodo) {
-    alert("Elegí primero el período a liquidar.");
+    mostrarMensaje("Elegí primero el período a liquidar.");
     return;
   }
 
@@ -199,15 +236,15 @@ function calcularLiquidacion() {
   const sueldoPagado = parseFloat($("pago-sueldopagado").value) || 0;
 
   if (!periodo) {
-    alert("Elegí el período a liquidar.");
+    mostrarMensaje("Elegí el período a liquidar.");
     return null;
   }
   if (valorHora <= 0) {
-    alert("Ingresá el valor hora vigente.");
+    mostrarMensaje("Ingresá el valor hora vigente.");
     return null;
   }
   if (horas <= 0) {
-    alert("Ingresá las horas trabajadas en el mes.");
+    mostrarMensaje("Ingresá las horas trabajadas en el mes.");
     return null;
   }
 
@@ -285,11 +322,16 @@ function onCalcular() {
 
 function onRegistrarPago() {
   if (!ultimoCalculo) return;
+  const btn = $("btn-registrar-pago");
 
   const existente = estado.pagos.find((p) => p.periodo === ultimoCalculo.periodo);
+  if (existente && btn.dataset.confirmando !== "1") {
+    iniciarConfirmacion(btn, "Ya existe un pago este período. ¿Reemplazar?");
+    return;
+  }
+  if (btn.dataset.confirmando === "1") finalizarConfirmacion(btn);
+
   if (existente) {
-    const confirmar = confirm(`Ya existe un pago registrado para ${ultimoCalculo.periodo}. ¿Querés reemplazarlo?`);
-    if (!confirmar) return;
     estado.pagos = estado.pagos.filter((p) => p.periodo !== ultimoCalculo.periodo);
   }
 
@@ -302,13 +344,10 @@ function onRegistrarPago() {
   estado.pagos.sort((a, b) => a.periodo.localeCompare(b.periodo));
   guardarEstado();
   renderTablaPagos();
-  alert(`Pago de ${ultimoCalculo.periodo} registrado.`);
+  mostrarMensaje(`Pago de ${ultimoCalculo.periodo} registrado.`);
 }
 
 function eliminarPago(id) {
-  const pago = estado.pagos.find((p) => p.id === id);
-  if (!pago) return;
-  if (!confirm(`¿Eliminar el pago registrado de ${pago.periodo}?`)) return;
   estado.pagos = estado.pagos.filter((p) => p.id !== id);
   guardarEstado();
   renderTablaPagos();
@@ -341,13 +380,15 @@ function renderTablaPagos() {
   }
 
   tbody.querySelectorAll(".link-borrar").forEach((btn) => {
-    btn.addEventListener("click", () => eliminarPago(btn.dataset.id));
+    btn.addEventListener("click", () =>
+      manejarClickConfirmable(btn, "¿Confirmar?", () => eliminarPago(btn.dataset.id))
+    );
   });
 }
 
 function exportarCSV() {
   if (estado.pagos.length === 0) {
-    alert("No hay pagos registrados para exportar.");
+    mostrarMensaje("No hay pagos registrados para exportar.");
     return;
   }
   const encabezados = [
@@ -375,10 +416,10 @@ function exportarCSV() {
 }
 
 function borrarTodoElRegistro() {
-  if (!confirm("Esto va a borrar todos los pagos registrados. ¿Continuar?")) return;
   estado.pagos = [];
   guardarEstado();
   renderTablaPagos();
+  mostrarMensaje("Se borró todo el registro de pagos.");
 }
 
 function renderTablaEscala() {
@@ -400,12 +441,13 @@ function renderTablaEscala() {
   }
 
   tbody.querySelectorAll(".link-borrar").forEach((btn) => {
-    btn.addEventListener("click", () => eliminarEscala(btn.dataset.id));
+    btn.addEventListener("click", () =>
+      manejarClickConfirmable(btn, "¿Confirmar?", () => eliminarEscala(btn.dataset.id))
+    );
   });
 }
 
 function eliminarEscala(id) {
-  if (!confirm("¿Eliminar esta fila de la escala de referencia?")) return;
   estado.escalaReferencia = estado.escalaReferencia.filter((e) => e.id !== id);
   guardarEstado();
   renderTablaEscala();
@@ -418,7 +460,7 @@ function onAgregarEscala() {
   const fuente = $("escala-fuente").value.trim() || "Ingresado manualmente";
 
   if (!vigenciaDesde || valorHora <= 0) {
-    alert("Completá al menos la vigencia y el valor hora.");
+    mostrarMensaje("Completá al menos la vigencia y el valor hora.");
     return;
   }
 
@@ -457,12 +499,13 @@ function renderTablaAdelantos() {
   }
 
   tbody.querySelectorAll(".link-borrar").forEach((btn) => {
-    btn.addEventListener("click", () => eliminarAdelanto(btn.dataset.id));
+    btn.addEventListener("click", () =>
+      manejarClickConfirmable(btn, "¿Confirmar?", () => eliminarAdelanto(btn.dataset.id))
+    );
   });
 }
 
 function eliminarAdelanto(id) {
-  if (!confirm("¿Eliminar este adelanto?")) return;
   estado.adelantos = estado.adelantos.filter((a) => a.id !== id);
   guardarEstado();
   renderTablaAdelantos();
@@ -476,7 +519,7 @@ function onAgregarAdelanto() {
   const nota = $("adelanto-nota").value.trim();
 
   if (!periodo || monto <= 0) {
-    alert("Completá al menos el período y el monto del adelanto.");
+    mostrarMensaje("Completá al menos el período y el monto del adelanto.");
     return;
   }
 
@@ -508,7 +551,9 @@ function init() {
   $("btn-calcular").addEventListener("click", onCalcular);
   $("btn-registrar-pago").addEventListener("click", onRegistrarPago);
   $("btn-exportar").addEventListener("click", exportarCSV);
-  $("btn-borrar-todo").addEventListener("click", borrarTodoElRegistro);
+  $("btn-borrar-todo").addEventListener("click", () =>
+    manejarClickConfirmable($("btn-borrar-todo"), "¿Seguro? Confirmar borrado", borrarTodoElRegistro)
+  );
   $("btn-agregar-escala").addEventListener("click", onAgregarEscala);
   $("btn-agregar-adelanto").addEventListener("click", onAgregarAdelanto);
   $("pago-periodo").addEventListener("change", () => {

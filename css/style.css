@@ -149,4 +149,32 @@ input[readonly] { background: #f0f2f4; color: var(--color-muted); }
   font-size: 0.85rem;
   text-decoration: underline;
   padding: 0;
+  white-space: nowrap;
 }
+
+.btn-confirmando,
+.link-borrar.btn-confirmando {
+  color: #fff;
+  background: var(--color-danger);
+  text-decoration: none;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.toast {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: var(--color-primary-dark);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  max-width: calc(100% - 32px);
+  text-align: center;
+}
+.toast.oculto { display: none; }
