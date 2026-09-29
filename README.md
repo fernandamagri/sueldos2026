@@ -51,13 +51,13 @@ python3 -m http.server 8000
    remuneración bruta, descuentos y el neto a cobrar.
 5. **Adelantos (anticipos)**: una sección para cargar cada adelanto que le
    entregues al empleado durante el mes (período, fecha, monto y nota), para
-   no perderlos de vista. Al liquidar el período, la app muestra el total de
-   adelantos cargados y lo usa para comparar contra lo pagado.
-6. **Sueldo pagado vs. sueldo según ley**: además del cálculo legal (ahora
-   llamado "Sueldo según ley a pagar"), se puede cargar lo que efectivamente
-   le pagaste ("Sueldo pagado"). La app muestra la diferencia entre lo
-   pagado más los adelantos del período contra el sueldo según ley, e indica
-   si falta pagar algo o si se pagó de más.
+   no perderlos de vista.
+6. **Saldo a pagar y sueldo pagado vs. sueldo según ley**: al liquidar el
+   período, la app resta los adelantos cargados del "Sueldo según ley a
+   pagar" para calcular el **saldo a pagar** (lo que todavía hay que
+   abonarle, descontado lo ya entregado como adelanto). El campo "Sueldo
+   pagado" se compara contra ese saldo, no contra el total, y la app indica
+   si falta pagar algo o si se pagó de más respecto del saldo.
 7. **Registro de pagos**: cada liquidación calculada se puede guardar como un
    pago del mes, incluyendo el sueldo según ley, los adelantos del período,
    lo pagado y la diferencia. Queda en una tabla histórica editable (se
@@ -90,10 +90,10 @@ Pensada para una empleada que trabaja por hora y no vive en el domicilio
    remunerativo. También muestra, solo a modo informativo, el monto de
    referencia del aporte y contribución mensual a ARCA según el tramo de
    horas semanales contratadas (menos de 12, de 12 a 15, o 16 o más).
-5. **Adelantos (anticipos)** y **sueldo pagado vs. sueldo según ley**: igual
-   que en la calculadora de Comercio, para no olvidar los adelantos
-   entregados durante el mes y comparar lo pagado contra lo que corresponde
-   según ley.
+5. **Adelantos (anticipos)** y **saldo a pagar**: igual que en la calculadora
+   de Comercio, para no olvidar los adelantos entregados durante el mes; se
+   restan del sueldo según ley para calcular el saldo pendiente, contra el
+   que se compara el sueldo pagado.
 6. **Registro de pagos**: igual que en la calculadora de Comercio, con
    exportación a CSV.
 

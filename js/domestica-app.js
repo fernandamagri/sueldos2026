@@ -261,7 +261,8 @@ function calcularLiquidacion() {
   const aporteArca = buscarAporteReferencia(bracket, periodo);
 
   const adelantosPeriodo = sumaAdelantosPeriodo(periodo);
-  const diferencia = sueldoPagado + adelantosPeriodo - neto;
+  const saldoAPagar = neto - adelantosPeriodo;
+  const diferencia = sueldoPagado - saldoAPagar;
 
   return {
     periodo,
@@ -279,6 +280,7 @@ function calcularLiquidacion() {
     aporteArcaMonto: aporteArca ? aporteArca.monto : null,
     aporteArcaFuente: aporteArca ? `${aporteArca.vigenciaDesde} · ${aporteArca.fuente}` : null,
     adelantosPeriodo,
+    saldoAPagar,
     sueldoPagado,
     diferencia,
   };
@@ -305,16 +307,17 @@ function onCalcular() {
   $("res-aporte-arca-info").textContent = r.aporteArcaFuente ? ` (${r.aporteArcaFuente})` : "";
 
   $("res-adelantos-periodo").textContent = fmtMoneda(r.adelantosPeriodo);
+  $("res-saldo-a-pagar").textContent = fmtMoneda(r.saldoAPagar);
   $("res-pagado").textContent = fmtMoneda(r.sueldoPagado);
   $("res-diferencia").textContent = fmtMoneda(r.diferencia);
 
   const infoDif = $("diferencia-info");
   if (Math.abs(r.diferencia) < 0.01) {
-    infoDif.textContent = "Está al día: lo pagado más los adelantos coincide con el sueldo según ley.";
+    infoDif.textContent = "Está al día: el sueldo pagado coincide con el saldo a pagar (sueldo según ley menos los adelantos).";
   } else if (r.diferencia < 0) {
-    infoDif.textContent = `Todavía falta pagar ${fmtMoneda(-r.diferencia)} de este período.`;
+    infoDif.textContent = `Todavía falta pagar ${fmtMoneda(-r.diferencia)} de este período (sobre el saldo, ya descontados los adelantos).`;
   } else {
-    infoDif.textContent = `Se pagó ${fmtMoneda(r.diferencia)} de más respecto del sueldo según ley.`;
+    infoDif.textContent = `Se pagó ${fmtMoneda(r.diferencia)} de más respecto del saldo a pagar.`;
   }
 
   $("resultado").classList.remove("oculto");
@@ -371,6 +374,7 @@ function renderTablaPagos() {
       <td>${fmtMoneda(p.descJubilacion)}</td>
       <td>${fmtMoneda(p.neto)}</td>
       <td>${fmtMoneda(p.adelantosPeriodo)}</td>
+      <td>${fmtMoneda(p.saldoAPagar)}</td>
       <td>${fmtMoneda(p.sueldoPagado)}</td>
       <td>${fmtMoneda(p.diferencia)}</td>
       <td>${registrado.toLocaleDateString("es-AR")}</td>
@@ -394,14 +398,14 @@ function exportarCSV() {
   const encabezados = [
     "periodo", "horas", "valor_hora", "remuneracion", "antiguedad_anios", "antiguedad_monto",
     "extra_remunerativo", "bruto", "desc_jubilacion", "no_remunerativo", "neto_ley",
-    "bracket_horas_aporte", "aporte_arca_referencia", "adelantos_periodo", "sueldo_pagado", "diferencia",
-    "registrado_en",
+    "bracket_horas_aporte", "aporte_arca_referencia", "adelantos_periodo", "saldo_a_pagar", "sueldo_pagado",
+    "diferencia", "registrado_en",
   ];
   const filas = estado.pagos.map((p) =>
     [
       p.periodo, p.horas, p.valorHora, p.remuneracion, p.antiguedadAnios, p.antiguedadMonto,
       p.extraRemunerativo, p.bruto, p.descJubilacion, p.noRemunerativo, p.neto,
-      p.bracket, p.aporteArcaMonto ?? "", p.adelantosPeriodo, p.sueldoPagado, p.diferencia,
+      p.bracket, p.aporteArcaMonto ?? "", p.adelantosPeriodo, p.saldoAPagar, p.sueldoPagado, p.diferencia,
       p.registradoEn,
     ].join(",")
   );
