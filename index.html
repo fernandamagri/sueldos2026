@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sueldos 2026 — Comercio Categoría A</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="app-header">
+  <h1>Calculadora de Sueldo · Comercio (CCT 130/75) — Categoría A</h1>
+  <p class="subtitle">Liquidación mensual y registro de pagos de un empleado</p>
+</header>
+
+<main class="container">
+
+  <!-- DATOS DEL EMPLEADO -->
+  <section class="card" id="seccion-empleado">
+    <h2>Datos del empleado</h2>
+    <div class="grid grid-3">
+      <label>Nombre y apellido
+        <input type="text" id="emp-nombre" placeholder="Ej: Juan Pérez">
+      </label>
+      <label>Categoría
+        <input type="text" id="emp-categoria" value="Comercio — Categoría A" readonly>
+      </label>
+      <label>Fecha de ingreso
+        <input type="date" id="emp-ingreso">
+      </label>
+    </div>
+    <button id="btn-guardar-empleado" class="btn btn-secondary">Guardar datos del empleado</button>
+  </section>
+
+  <!-- PARÁMETROS / CONFIGURACIÓN -->
+  <section class="card" id="seccion-config">
+    <h2>Parámetros de liquidación</h2>
+    <p class="hint">
+      El básico de convenio y las alícuotas se actualizan periódicamente por paritaria (FAECYS / CCT 130/75).
+      Verificá siempre el valor vigente antes de liquidar un período y actualizalo acá.
+    </p>
+    <div class="grid grid-3">
+      <label>% Antigüedad por año
+        <input type="number" id="cfg-antiguedad" step="0.01" value="1">
+      </label>
+      <label>% Presentismo
+        <input type="number" id="cfg-presentismo" step="0.01" value="8.33">
+      </label>
+      <label>% Jubilación
+        <input type="number" id="cfg-jubilacion" step="0.01" value="11">
+      </label>
+      <label>% Ley 19.032 (INSSJP)
+        <input type="number" id="cfg-ley19032" step="0.01" value="3">
+      </label>
+      <label>% Obra social
+        <input type="number" id="cfg-obrasocial" step="0.01" value="3">
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="cfg-sindicato-activo">
+        Aplicar cuota sindical (FAECYS)
+      </label>
+      <label>% Cuota sindical
+        <input type="number" id="cfg-sindicato" step="0.01" value="2.5">
+      </label>
+    </div>
+    <button id="btn-guardar-config" class="btn btn-secondary">Guardar parámetros</button>
+  </section>
+
+  <!-- CALCULADORA / NUEVO PAGO -->
+  <section class="card" id="seccion-calculadora">
+    <h2>Liquidar período</h2>
+    <div class="grid grid-3">
+      <label>Período (mes/año)
+        <input type="month" id="pago-periodo">
+      </label>
+      <label>Sueldo básico de categoría (vigente en el período)
+        <input type="number" id="pago-basico" step="0.01" min="0" placeholder="Ingresá el básico vigente">
+      </label>
+      <label>Antigüedad (años, calculada)
+        <input type="number" id="pago-antiguedad-anios" step="1" min="0" readonly>
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="pago-presentismo" checked>
+        Cobra presentismo este mes
+      </label>
+      <label>Adicional no remunerativo (opcional)
+        <input type="number" id="pago-noremun" step="0.01" min="0" value="0">
+      </label>
+    </div>
+
+    <button id="btn-calcular" class="btn btn-primary">Calcular</button>
+
+    <div id="resultado" class="resultado oculto">
+      <h3>Resultado del período</h3>
+      <table class="tabla-resultado">
+        <tbody>
+          <tr><td>Sueldo básico</td><td id="res-basico"></td></tr>
+          <tr><td>Antigüedad (<span id="res-anios"></span> años)</td><td id="res-antiguedad"></td></tr>
+          <tr><td>Presentismo</td><td id="res-presentismo"></td></tr>
+          <tr class="fila-subtotal"><td>Remuneración bruta</td><td id="res-bruto"></td></tr>
+          <tr><td>Descuento jubilación</td><td id="res-desc-jubilacion"></td></tr>
+          <tr><td>Descuento ley 19.032</td><td id="res-desc-ley"></td></tr>
+          <tr><td>Descuento obra social</td><td id="res-desc-os"></td></tr>
+          <tr id="fila-desc-sindicato"><td>Cuota sindical</td><td id="res-desc-sindicato"></td></tr>
+          <tr class="fila-subtotal"><td>Total descuentos</td><td id="res-total-desc"></td></tr>
+          <tr><td>Adicional no remunerativo</td><td id="res-noremun"></td></tr>
+          <tr class="fila-total"><td>Neto a cobrar</td><td id="res-neto"></td></tr>
+        </tbody>
+      </table>
+      <button id="btn-registrar-pago" class="btn btn-primary">Registrar este pago</button>
+    </div>
+  </section>
+
+  <!-- REGISTRO DE PAGOS -->
+  <section class="card" id="seccion-registro">
+    <h2>Registro de pagos mensuales</h2>
+    <div class="tabla-scroll">
+      <table class="tabla-registro" id="tabla-pagos">
+        <thead>
+          <tr>
+            <th>Período</th>
+            <th>Básico</th>
+            <th>Antigüedad</th>
+            <th>Bruto</th>
+            <th>Descuentos</th>
+            <th>Neto</th>
+            <th>Registrado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody-pagos">
+        </tbody>
+      </table>
+    </div>
+    <p id="sin-pagos" class="hint">Todavía no registraste ningún pago.</p>
+    <div class="acciones-registro">
+      <button id="btn-exportar" class="btn btn-secondary">Exportar registro (CSV)</button>
+      <button id="btn-borrar-todo" class="btn btn-danger">Borrar todo el registro</button>
+    </div>
+  </section>
+
+</main>
+
+<footer class="app-footer">
+  <p>Los valores de básico y alícuotas deben verificarse contra la escala salarial vigente de FAECYS / CCT 130/75. Esta calculadora es una herramienta de apoyo y no reemplaza la liquidación oficial de recibo de sueldo.</p>
+</footer>
+
+<script src="js/app.js"></script>
+</body>
+</html>
