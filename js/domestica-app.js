@@ -43,6 +43,7 @@ const DEFAULT_STATE = {
   pagos: [],
   escalaReferencia: ESCALA_REFERENCIA_SEED,
   aportesReferencia: APORTES_REFERENCIA_SEED,
+  adelantos: [], // { id, periodo, fecha, monto, nota }
 };
 
 function cargarEstado() {
@@ -60,6 +61,7 @@ function cargarEstado() {
       aportesReferencia: Array.isArray(parsed.aportesReferencia)
         ? parsed.aportesReferencia
         : structuredClone(APORTES_REFERENCIA_SEED),
+      adelantos: Array.isArray(parsed.adelantos) ? parsed.adelantos : [],
     };
   } catch (e) {
     console.warn("No se pudo leer el estado guardado, se usa uno nuevo.", e);
@@ -114,6 +116,26 @@ function poblarFormulario() {
 function actualizarAniosAntiguedad() {
   const anios = calcularAniosAntiguedad(estado.empleada.ingreso, $("pago-periodo").value);
   $("pago-antiguedad-anios").value = anios;
+}
+
+function sumaAdelantosPeriodo(periodo) {
+  return estado.adelantos
+    .filter((a) => a.periodo === periodo)
+    .reduce((total, a) => total + a.monto, 0);
+}
+
+function actualizarInfoAdelantosPeriodo() {
+  const periodo = $("pago-periodo").value;
+  const info = $("adelantos-periodo-info");
+  if (!periodo) {
+    info.textContent = "";
+    return;
+  }
+  const total = sumaAdelantosPeriodo(periodo);
+  info.textContent =
+    total > 0
+      ? `Adelantos ya cargados para ${periodo}: ${fmtMoneda(total)}.`
+      : `No hay adelantos cargados para ${periodo}.`;
 }
 
 function guardarDatosEmpleada() {
@@ -174,6 +196,7 @@ function calcularLiquidacion() {
   const extraRemunerativo = parseFloat($("pago-extra").value) || 0;
   const noRemunerativo = parseFloat($("pago-noremun").value) || 0;
   const bracket = $("pago-bracket-horas").value;
+  const sueldoPagado = parseFloat($("pago-sueldopagado").value) || 0;
 
   if (!periodo) {
     alert("Elegí el período a liquidar.");
@@ -200,6 +223,9 @@ function calcularLiquidacion() {
 
   const aporteArca = buscarAporteReferencia(bracket, periodo);
 
+  const adelantosPeriodo = sumaAdelantosPeriodo(periodo);
+  const diferencia = sueldoPagado + adelantosPeriodo - neto;
+
   return {
     periodo,
     valorHora,
@@ -215,6 +241,9 @@ function calcularLiquidacion() {
     bracket,
     aporteArcaMonto: aporteArca ? aporteArca.monto : null,
     aporteArcaFuente: aporteArca ? `${aporteArca.vigenciaDesde} · ${aporteArca.fuente}` : null,
+    adelantosPeriodo,
+    sueldoPagado,
+    diferencia,
   };
 }
 
@@ -237,6 +266,19 @@ function onCalcular() {
 
   $("res-aporte-arca").textContent = r.aporteArcaMonto != null ? fmtMoneda(r.aporteArcaMonto) : "sin dato cargado";
   $("res-aporte-arca-info").textContent = r.aporteArcaFuente ? ` (${r.aporteArcaFuente})` : "";
+
+  $("res-adelantos-periodo").textContent = fmtMoneda(r.adelantosPeriodo);
+  $("res-pagado").textContent = fmtMoneda(r.sueldoPagado);
+  $("res-diferencia").textContent = fmtMoneda(r.diferencia);
+
+  const infoDif = $("diferencia-info");
+  if (Math.abs(r.diferencia) < 0.01) {
+    infoDif.textContent = "Está al día: lo pagado más los adelantos coincide con el sueldo según ley.";
+  } else if (r.diferencia < 0) {
+    infoDif.textContent = `Todavía falta pagar ${fmtMoneda(-r.diferencia)} de este período.`;
+  } else {
+    infoDif.textContent = `Se pagó ${fmtMoneda(r.diferencia)} de más respecto del sueldo según ley.`;
+  }
 
   $("resultado").classList.remove("oculto");
 }
@@ -289,6 +331,9 @@ function renderTablaPagos() {
       <td>${fmtMoneda(p.bruto)}</td>
       <td>${fmtMoneda(p.descJubilacion)}</td>
       <td>${fmtMoneda(p.neto)}</td>
+      <td>${fmtMoneda(p.adelantosPeriodo)}</td>
+      <td>${fmtMoneda(p.sueldoPagado)}</td>
+      <td>${fmtMoneda(p.diferencia)}</td>
       <td>${registrado.toLocaleDateString("es-AR")}</td>
       <td><button class="link-borrar" data-id="${p.id}">Eliminar</button></td>
     `;
@@ -307,14 +352,16 @@ function exportarCSV() {
   }
   const encabezados = [
     "periodo", "horas", "valor_hora", "remuneracion", "antiguedad_anios", "antiguedad_monto",
-    "extra_remunerativo", "bruto", "desc_jubilacion", "no_remunerativo", "neto",
-    "bracket_horas_aporte", "aporte_arca_referencia", "registrado_en",
+    "extra_remunerativo", "bruto", "desc_jubilacion", "no_remunerativo", "neto_ley",
+    "bracket_horas_aporte", "aporte_arca_referencia", "adelantos_periodo", "sueldo_pagado", "diferencia",
+    "registrado_en",
   ];
   const filas = estado.pagos.map((p) =>
     [
       p.periodo, p.horas, p.valorHora, p.remuneracion, p.antiguedadAnios, p.antiguedadMonto,
       p.extraRemunerativo, p.bruto, p.descJubilacion, p.noRemunerativo, p.neto,
-      p.bracket, p.aporteArcaMonto ?? "", p.registradoEn,
+      p.bracket, p.aporteArcaMonto ?? "", p.adelantosPeriodo, p.sueldoPagado, p.diferencia,
+      p.registradoEn,
     ].join(",")
   );
   const csv = [encabezados.join(","), ...filas].join("\n");
@@ -389,10 +436,71 @@ function onAgregarEscala() {
   $("escala-fuente").value = "";
 }
 
+function renderTablaAdelantos() {
+  const tbody = $("tbody-adelantos");
+  tbody.innerHTML = "";
+
+  $("sin-adelantos").style.display = estado.adelantos.length === 0 ? "" : "none";
+
+  const filas = [...estado.adelantos].sort((a, b) => (b.fecha || "").localeCompare(a.fecha || ""));
+
+  for (const a of filas) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${a.periodo}</td>
+      <td>${a.fecha || "—"}</td>
+      <td>${fmtMoneda(a.monto)}</td>
+      <td>${a.nota || ""}</td>
+      <td><button class="link-borrar" data-id="${a.id}">Eliminar</button></td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  tbody.querySelectorAll(".link-borrar").forEach((btn) => {
+    btn.addEventListener("click", () => eliminarAdelanto(btn.dataset.id));
+  });
+}
+
+function eliminarAdelanto(id) {
+  if (!confirm("¿Eliminar este adelanto?")) return;
+  estado.adelantos = estado.adelantos.filter((a) => a.id !== id);
+  guardarEstado();
+  renderTablaAdelantos();
+  actualizarInfoAdelantosPeriodo();
+}
+
+function onAgregarAdelanto() {
+  const periodo = $("adelanto-periodo").value;
+  const fecha = $("adelanto-fecha").value;
+  const monto = parseFloat($("adelanto-monto").value) || 0;
+  const nota = $("adelanto-nota").value.trim();
+
+  if (!periodo || monto <= 0) {
+    alert("Completá al menos el período y el monto del adelanto.");
+    return;
+  }
+
+  estado.adelantos.push({
+    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+    periodo,
+    fecha,
+    monto,
+    nota,
+  });
+  guardarEstado();
+  renderTablaAdelantos();
+  actualizarInfoAdelantosPeriodo();
+
+  $("adelanto-monto").value = "";
+  $("adelanto-nota").value = "";
+}
+
 function init() {
   poblarFormulario();
   renderTablaPagos();
   renderTablaEscala();
+  renderTablaAdelantos();
+  actualizarInfoAdelantosPeriodo();
 
   $("btn-guardar-empleada").addEventListener("click", guardarDatosEmpleada);
   $("btn-guardar-config").addEventListener("click", guardarConfig);
@@ -402,7 +510,11 @@ function init() {
   $("btn-exportar").addEventListener("click", exportarCSV);
   $("btn-borrar-todo").addEventListener("click", borrarTodoElRegistro);
   $("btn-agregar-escala").addEventListener("click", onAgregarEscala);
-  $("pago-periodo").addEventListener("change", actualizarAniosAntiguedad);
+  $("btn-agregar-adelanto").addEventListener("click", onAgregarAdelanto);
+  $("pago-periodo").addEventListener("change", () => {
+    actualizarAniosAntiguedad();
+    actualizarInfoAdelantosPeriodo();
+  });
 }
 
 document.addEventListener("DOMContentLoaded", init);

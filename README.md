@@ -49,9 +49,19 @@ python3 -m http.server 8000
    que se suma a la remuneración bruta y sí tributa descuentos, a diferencia
    del adicional no remunerativo. Calcula antigüedad, presentismo,
    remuneración bruta, descuentos y el neto a cobrar.
-5. **Registro de pagos**: cada liquidación calculada se puede guardar como un
-   pago del mes. Queda en una tabla histórica editable (se puede eliminar un
-   registro) y exportable a CSV.
+5. **Adelantos (anticipos)**: una sección para cargar cada adelanto que le
+   entregues al empleado durante el mes (período, fecha, monto y nota), para
+   no perderlos de vista. Al liquidar el período, la app muestra el total de
+   adelantos cargados y lo usa para comparar contra lo pagado.
+6. **Sueldo pagado vs. sueldo según ley**: además del cálculo legal (ahora
+   llamado "Sueldo según ley a pagar"), se puede cargar lo que efectivamente
+   le pagaste ("Sueldo pagado"). La app muestra la diferencia entre lo
+   pagado más los adelantos del período contra el sueldo según ley, e indica
+   si falta pagar algo o si se pagó de más.
+7. **Registro de pagos**: cada liquidación calculada se puede guardar como un
+   pago del mes, incluyendo el sueldo según ley, los adelantos del período,
+   lo pagado y la diferencia. Queda en una tabla histórica editable (se
+   puede eliminar un registro) y exportable a CSV.
 
 ## Personal de Casas Particulares — con retiro (`domestica.html`)
 
@@ -80,7 +90,11 @@ Pensada para una empleada que trabaja por hora y no vive en el domicilio
    remunerativo. También muestra, solo a modo informativo, el monto de
    referencia del aporte y contribución mensual a ARCA según el tramo de
    horas semanales contratadas (menos de 12, de 12 a 15, o 16 o más).
-5. **Registro de pagos**: igual que en la calculadora de Comercio, con
+5. **Adelantos (anticipos)** y **sueldo pagado vs. sueldo según ley**: igual
+   que en la calculadora de Comercio, para no olvidar los adelantos
+   entregados durante el mes y comparar lo pagado contra lo que corresponde
+   según ley.
+6. **Registro de pagos**: igual que en la calculadora de Comercio, con
    exportación a CSV.
 
 ## Importante

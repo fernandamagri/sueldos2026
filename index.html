@@ -73,6 +73,46 @@
     <button id="btn-guardar-config" class="btn btn-secondary">Guardar parámetros</button>
   </section>
 
+  <!-- ADELANTOS -->
+  <section class="card" id="seccion-adelantos">
+    <h2>Adelantos (anticipos)</h2>
+    <p class="hint">
+      Registrá acá cada adelanto que le entregues al empleado durante el mes, para no perderlos de vista.
+      Al liquidar el período, la app te muestra el total de adelantos cargados para restarlo del sueldo
+      según ley y saber cuánto falta pagar.
+    </p>
+    <div class="tabla-scroll">
+      <table class="tabla-registro" id="tabla-adelantos">
+        <thead>
+          <tr>
+            <th>Período</th>
+            <th>Fecha</th>
+            <th>Monto</th>
+            <th>Nota</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody-adelantos"></tbody>
+      </table>
+    </div>
+    <p id="sin-adelantos" class="hint">Todavía no cargaste ningún adelanto.</p>
+    <div class="grid grid-3 form-escala">
+      <label>Período
+        <input type="month" id="adelanto-periodo">
+      </label>
+      <label>Fecha
+        <input type="date" id="adelanto-fecha">
+      </label>
+      <label>Monto
+        <input type="number" id="adelanto-monto" step="0.01" min="0">
+      </label>
+      <label>Nota (opcional)
+        <input type="text" id="adelanto-nota" placeholder="Ej: pedido para alquiler">
+      </label>
+    </div>
+    <button id="btn-agregar-adelanto" class="btn btn-secondary">Agregar adelanto</button>
+  </section>
+
   <!-- CALCULADORA / NUEVO PAGO -->
   <section class="card" id="seccion-calculadora">
     <h2>Liquidar período</h2>
@@ -100,9 +140,13 @@
       <label>Extra remunerativo (comisión, premio, bono, etc.)
         <input type="number" id="pago-extra" step="0.01" min="0" value="0">
       </label>
+      <label>Sueldo pagado (lo que ya le abonaste)
+        <input type="number" id="pago-sueldopagado" step="0.01" min="0" value="0">
+      </label>
     </div>
 
     <p id="sugerencia-basico-info" class="hint oculto"></p>
+    <p id="adelantos-periodo-info" class="hint"></p>
 
     <button id="btn-calcular" class="btn btn-primary">Calcular</button>
 
@@ -121,9 +165,13 @@
           <tr id="fila-desc-sindicato"><td>Cuota sindical</td><td id="res-desc-sindicato"></td></tr>
           <tr class="fila-subtotal"><td>Total descuentos</td><td id="res-total-desc"></td></tr>
           <tr><td>Adicional no remunerativo</td><td id="res-noremun"></td></tr>
-          <tr class="fila-total"><td>Neto a cobrar</td><td id="res-neto"></td></tr>
+          <tr class="fila-total"><td>Sueldo según ley a pagar</td><td id="res-neto"></td></tr>
+          <tr><td>Adelantos del período</td><td id="res-adelantos-periodo"></td></tr>
+          <tr><td>Sueldo pagado</td><td id="res-pagado"></td></tr>
+          <tr class="fila-total"><td>Diferencia (pagado + adelantos − ley)</td><td id="res-diferencia"></td></tr>
         </tbody>
       </table>
+      <p id="diferencia-info" class="hint"></p>
       <button id="btn-registrar-pago" class="btn btn-primary">Registrar este pago</button>
     </div>
   </section>
@@ -189,7 +237,10 @@
             <th>Extra</th>
             <th>Bruto</th>
             <th>Descuentos</th>
-            <th>Neto</th>
+            <th>Ley a pagar</th>
+            <th>Adelantos</th>
+            <th>Pagado</th>
+            <th>Diferencia</th>
             <th>Registrado</th>
             <th></th>
           </tr>
