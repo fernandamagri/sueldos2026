@@ -104,18 +104,22 @@ Pensada para una empleada que trabaja por hora y no vive en el domicilio
 ## Mail de control por pago registrado
 
 Apenas se registra un pago (en cualquiera de las dos calculadoras), la app
-intenta abrir tu programa de correo predeterminado con un mail borrador ya
-completo: destinatario `fernandamagri@hotmail.com`, asunto "Registro Pago
-Sueldos [Mes] [Año]" (por ejemplo, "Registro Pago Sueldos Septiembre 2026")
-y el detalle completo de esa liquidación en el cuerpo. Además, **copia ese
-mismo mail al portapapeles automáticamente**, porque algunos navegadores o
-vistas previas embebidas bloquean los enlaces `mailto:` por seguridad y no
-hay forma de detectar si realmente se abrieron: si no se abre tu correo
-solo, pegá el contenido del portapapeles en un mail nuevo. También hay un
-botón "Mail" en cada fila del registro de pagos por si querés volver a
-generar y copiar ese mail más adelante. Como la app no tiene backend, no
-puede enviar el mail 100% sola: esta es la forma más simple y confiable de
-acercarse a eso sin necesitar cuentas ni configuración extra.
+**copia automáticamente al portapapeles** un mail de control ya armado:
+destinatario `fernandamagri@hotmail.com`, asunto "Registro Pago Sueldos
+[Mes] [Año]" (por ejemplo, "Registro Pago Sueldos Septiembre 2026") y el
+detalle completo de esa liquidación. Pegalo en un mail nuevo para enviarlo.
+
+También aparece un enlace "Abrir mi correo", que sí apunta a un `mailto:`
+real por si tu navegador lo abre directamente — pero la app nunca lo
+dispara sola: según el navegador o si estás viendo la app dentro de una
+vista previa embebida, navegar automáticamente a un enlace `mailto:` puede
+dejar la página en blanco en vez de simplemente no hacer nada, así que ese
+enlace queda siempre como una acción manual y opcional. El portapapeles es
+la forma confiable de tener el mail siempre, sin depender de eso. También
+hay un botón "Mail" en cada fila del registro de pagos por si querés volver
+a copiar ese mail más adelante. Como la app no tiene backend, no puede
+enviar el mail 100% sola: esta es la forma más simple y segura de acercarse
+a eso sin necesitar cuentas ni configuración extra.
 
 ## Eliminar filas
 

@@ -351,10 +351,12 @@ function construirMailtoPago(p) {
   return `mailto:${EMAIL_CONTROL_PAGOS}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
 }
 
-// Intenta abrir el cliente de correo y, además, copia el mail al portapapeles: algunos
-// navegadores o visores embebidos (como una vista previa) bloquean los enlaces mailto: por
-// seguridad y no hay forma de saber si funcionó, así que el portapapeles queda como respaldo.
-async function intentarAbrirMail(p) {
+// Copia el mail al portapapeles. Importante: NO navegamos automáticamente a un enlace mailto:
+// (ni con location.href ni con window.open) porque dentro de algunos visores embebidos, como
+// una vista previa, eso puede dejar la página en blanco en vez de simplemente no hacer nada.
+// El enlace "Abrir mi correo" que se actualiza junto con esto es un <a> real que el usuario
+// puede tocar si quiere, a su propio riesgo, sin que la app lo dispare por su cuenta.
+async function copiarMailPago(p) {
   const { asunto, cuerpo } = construirDetallePago(p);
   const textoParaCopiar = `Para: ${EMAIL_CONTROL_PAGOS}\nAsunto: ${asunto}\n\n${cuerpo}`;
 
@@ -368,21 +370,21 @@ async function intentarAbrirMail(p) {
     copiado = false;
   }
 
-  try {
-    window.location.href = construirMailtoPago(p);
-  } catch (e) {
-    // algunos visores embebidos bloquean mailto:; seguimos con el respaldo del portapapeles.
+  const link = $("link-abrir-mail");
+  if (link) {
+    link.href = construirMailtoPago(p);
+    link.classList.remove("oculto");
   }
 
   return copiado;
 }
 
 async function abrirMailPago(p) {
-  const copiado = await intentarAbrirMail(p);
+  const copiado = await copiarMailPago(p);
   mostrarMensaje(
     copiado
-      ? `Se intentó abrir tu correo para ${EMAIL_CONTROL_PAGOS} y se copió el mail al portapapeles por las dudas (pegalo en un mail nuevo si no se abrió solo).`
-      : `Se intentó abrir tu correo para ${EMAIL_CONTROL_PAGOS}. Si no pasó nada, tu navegador bloqueó el enlace; usá el botón "Mail" de la fila para reintentarlo.`
+      ? `Se copió el mail de control al portapapeles: pegalo en un mail nuevo a ${EMAIL_CONTROL_PAGOS}, o tocá "Abrir mi correo".`
+      : `No se pudo copiar automáticamente. Tocá "Abrir mi correo" o copiá el detalle manualmente.`
   );
 }
 
@@ -415,12 +417,12 @@ async function onRegistrarPago() {
   ultimoPagoRegistrado = nuevoPago;
   $("btn-enviar-mail").classList.remove("oculto");
 
-  const copiado = await intentarAbrirMail(nuevoPago);
+  const copiado = await copiarMailPago(nuevoPago);
   mostrarMensaje(
     `Pago de ${ultimoCalculo.periodo} registrado. ` +
       (copiado
-        ? `Se intentó abrir tu correo y se copió el mail al portapapeles por las dudas.`
-        : `Se intentó abrir tu correo de control (${EMAIL_CONTROL_PAGOS}).`)
+        ? `Se copió el mail de control al portapapeles: pegalo en un mail nuevo a ${EMAIL_CONTROL_PAGOS}, o tocá "Abrir mi correo".`
+        : `No se pudo copiar el mail automáticamente. Tocá "Abrir mi correo" o el botón "Enviar mail de control".`)
   );
 }
 
