@@ -269,6 +269,7 @@ function calcularLiquidacion() {
 }
 
 let ultimoCalculo = null;
+let ultimoPagoRegistrado = null;
 
 function onCalcular() {
   const r = calcularLiquidacion();
@@ -410,6 +411,9 @@ async function onRegistrarPago() {
   estado.pagos.sort((a, b) => a.periodo.localeCompare(b.periodo));
   guardarEstado();
   renderTablaPagos();
+
+  ultimoPagoRegistrado = nuevoPago;
+  $("btn-enviar-mail").classList.remove("oculto");
 
   const copiado = await intentarAbrirMail(nuevoPago);
   mostrarMensaje(
@@ -669,6 +673,9 @@ function init() {
   $("btn-sugerir-basico").addEventListener("click", onSugerirBasico);
   $("btn-calcular").addEventListener("click", onCalcular);
   $("btn-registrar-pago").addEventListener("click", onRegistrarPago);
+  $("btn-enviar-mail").addEventListener("click", () => {
+    if (ultimoPagoRegistrado) abrirMailPago(ultimoPagoRegistrado);
+  });
   $("btn-exportar").addEventListener("click", exportarCSV);
   $("btn-borrar-todo").addEventListener("click", () =>
     manejarClickConfirmable($("btn-borrar-todo"), "¿Seguro? Confirmar borrado", borrarTodoElRegistro)
