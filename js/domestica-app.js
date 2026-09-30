@@ -16,6 +16,12 @@ const BRACKETS_APORTE = {
   "16omas": "16 hs/semana o más",
 };
 
+const EMAIL_CONTROL_PAGOS = "fernandamagri@hotmail.com";
+const NOMBRES_MES = [
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+
 // Antigüedad computable recién desde el 1/9/2020, por Ley 26.844 (adicional vigente desde set-2021).
 const ANTIGUEDAD_FECHA_ANCLA = "2020-09-01";
 
@@ -341,6 +347,48 @@ function onCalcular() {
   $("resultado").classList.remove("oculto");
 }
 
+function nombreMesAnio(periodoAAAAMM) {
+  const [anio, mes] = periodoAAAAMM.split("-").map(Number);
+  const nombre = NOMBRES_MES[mes - 1] || "";
+  return `${nombre.charAt(0).toUpperCase()}${nombre.slice(1)} ${anio}`;
+}
+
+function construirMailtoPago(p) {
+  const periodoTexto = nombreMesAnio(p.periodo);
+  const asunto = `Registro Pago Sueldos ${periodoTexto}`;
+  const cuerpo = [
+    `Empleada: ${estado.empleada.nombre || "(sin nombre cargado)"}`,
+    `Categoría: ${CATEGORIAS[estado.empleada.categoria] || estado.empleada.categoria}`,
+    `Período: ${periodoTexto}`,
+    "",
+    `Horas trabajadas: ${p.horas}`,
+    `Valor hora: ${fmtMoneda(p.valorHora)}`,
+    `Remuneración (horas × valor hora): ${fmtMoneda(p.remuneracion)}`,
+    `Antigüedad (${p.antiguedadAnios} años): ${fmtMoneda(p.antiguedadMonto)}`,
+    `Extra remunerativo: ${fmtMoneda(p.extraRemunerativo)}`,
+    `Remuneración bruta: ${fmtMoneda(p.bruto)}`,
+    "",
+    `Aporte jubilatorio retenido: ${fmtMoneda(p.descJubilacion)}`,
+    `Adicional no remunerativo: ${fmtMoneda(p.noRemunerativo)}`,
+    `Sueldo según ley a pagar: ${fmtMoneda(p.neto)}`,
+    "",
+    `Aporte/contribución de referencia a ARCA (${BRACKETS_APORTE[p.bracket] || p.bracket}): ${p.aporteArcaMonto != null ? fmtMoneda(p.aporteArcaMonto) : "sin dato cargado"}`,
+    "",
+    `Adelantos del período: ${fmtMoneda(p.adelantosPeriodo)}`,
+    `Saldo a pagar (ley − adelantos): ${fmtMoneda(p.saldoAPagar)}`,
+    `Sueldo pagado: ${fmtMoneda(p.sueldoPagado)}`,
+    `Diferencia (pagado − saldo a pagar): ${fmtMoneda(p.diferencia)}`,
+    "",
+    `Registrado el: ${new Date(p.registradoEn).toLocaleString("es-AR")}`,
+  ].join("\r\n");
+
+  return `mailto:${EMAIL_CONTROL_PAGOS}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+}
+
+function abrirMailPago(p) {
+  window.location.href = construirMailtoPago(p);
+}
+
 function onRegistrarPago() {
   if (!ultimoCalculo) return;
   const btn = $("btn-registrar-pago");
@@ -356,16 +404,18 @@ function onRegistrarPago() {
     estado.pagos = estado.pagos.filter((p) => p.periodo !== ultimoCalculo.periodo);
   }
 
-  estado.pagos.push({
+  const nuevoPago = {
     id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
     ...ultimoCalculo,
     registradoEn: new Date().toISOString(),
-  });
+  };
+  estado.pagos.push(nuevoPago);
 
   estado.pagos.sort((a, b) => a.periodo.localeCompare(b.periodo));
   guardarEstado();
   renderTablaPagos();
-  mostrarMensaje(`Pago de ${ultimoCalculo.periodo} registrado.`);
+  mostrarMensaje(`Pago de ${ultimoCalculo.periodo} registrado. Se abrió el mail de control.`);
+  abrirMailPago(nuevoPago);
 }
 
 function eliminarPago(id) {
@@ -396,10 +446,22 @@ function renderTablaPagos() {
       <td>${fmtMoneda(p.sueldoPagado)}</td>
       <td>${fmtMoneda(p.diferencia)}</td>
       <td>${registrado.toLocaleDateString("es-AR")}</td>
-      <td><button class="link-borrar" data-id="${p.id}">Eliminar</button></td>
+      <td>
+        <div class="acciones-fila">
+          <button class="link-mail" data-id="${p.id}">Mail</button>
+          <button class="link-borrar" data-id="${p.id}">Eliminar</button>
+        </div>
+      </td>
     `;
     tbody.appendChild(tr);
   }
+
+  tbody.querySelectorAll(".link-mail").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const pago = estado.pagos.find((p) => p.id === btn.dataset.id);
+      if (pago) abrirMailPago(pago);
+    });
+  });
 
   tbody.querySelectorAll(".link-borrar").forEach((btn) => {
     btn.addEventListener("click", () =>

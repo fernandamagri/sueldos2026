@@ -101,6 +101,19 @@ Pensada para una empleada que trabaja por hora y no vive en el domicilio
 6. **Registro de pagos**: igual que en la calculadora de Comercio, con
    exportación a CSV.
 
+## Mail de control por pago registrado
+
+Apenas se registra un pago (en cualquiera de las dos calculadoras), la app
+abre automáticamente tu programa de correo predeterminado con un mail
+borrador ya completo: destinatario `fernandamagri@hotmail.com`, asunto
+"Registro Pago Sueldos [Mes] [Año]" (por ejemplo, "Registro Pago Sueldos
+Septiembre 2026") y el detalle completo de esa liquidación en el cuerpo.
+Solo falta tocar "Enviar" en tu cliente de correo. También hay un botón
+"Mail" en cada fila del registro de pagos por si querés volver a generar
+ese mail más adelante. Como la app no tiene backend, no puede enviar el
+mail 100% sola sin abrir nada: esta es la forma más simple de automatizarlo
+sin necesitar cuentas ni configuración extra.
+
 ## Eliminar filas
 
 Cualquier fila cargada (pagos registrados, adelantos, filas de la escala de

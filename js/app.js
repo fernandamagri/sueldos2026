@@ -8,6 +8,12 @@ const RAMAS = {
   vendedor: "Vendedor A",
 };
 
+const EMAIL_CONTROL_PAGOS = "fernandamagri@hotmail.com";
+const NOMBRES_MES = [
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+
 // Básicos de referencia cargados desde fuentes públicas (Infobae, FAECYS, CalculAR)
 // el 29/09/2026, correspondientes a la escala CCT 130/75 vigente en septiembre 2026
 // (tercera cuota del acuerdo julio-septiembre 2026, +5,7% acumulado). Son un punto de
@@ -300,6 +306,50 @@ function onCalcular() {
   $("resultado").classList.remove("oculto");
 }
 
+function nombreMesAnio(periodoAAAAMM) {
+  const [anio, mes] = periodoAAAAMM.split("-").map(Number);
+  const nombre = NOMBRES_MES[mes - 1] || "";
+  return `${nombre.charAt(0).toUpperCase()}${nombre.slice(1)} ${anio}`;
+}
+
+function construirMailtoPago(p) {
+  const periodoTexto = nombreMesAnio(p.periodo);
+  const asunto = `Registro Pago Sueldos ${periodoTexto}`;
+  const cuerpo = [
+    `Empleado: ${estado.empleado.nombre || "(sin nombre cargado)"}`,
+    `Categoría: ${RAMAS[estado.empleado.rama] || estado.empleado.rama}`,
+    `Período: ${periodoTexto}`,
+    "",
+    `Sueldo básico: ${fmtMoneda(p.basico)}`,
+    `Antigüedad (${p.antiguedadAnios} años): ${fmtMoneda(p.antiguedadMonto)}`,
+    `Presentismo: ${fmtMoneda(p.presentismoMonto)}`,
+    `Extra remunerativo: ${fmtMoneda(p.extraRemunerativo)}`,
+    `Remuneración bruta: ${fmtMoneda(p.bruto)}`,
+    "",
+    `Descuento jubilación: ${fmtMoneda(p.descJubilacion)}`,
+    `Descuento ley 19.032: ${fmtMoneda(p.descLey19032)}`,
+    `Descuento obra social: ${fmtMoneda(p.descObraSocial)}`,
+    `Cuota sindical: ${fmtMoneda(p.descSindicato)}`,
+    `Total descuentos: ${fmtMoneda(p.totalDescuentos)}`,
+    "",
+    `Adicional no remunerativo: ${fmtMoneda(p.noRemunerativo)}`,
+    `Sueldo según ley a pagar: ${fmtMoneda(p.neto)}`,
+    "",
+    `Adelantos del período: ${fmtMoneda(p.adelantosPeriodo)}`,
+    `Saldo a pagar (ley − adelantos): ${fmtMoneda(p.saldoAPagar)}`,
+    `Sueldo pagado: ${fmtMoneda(p.sueldoPagado)}`,
+    `Diferencia (pagado − saldo a pagar): ${fmtMoneda(p.diferencia)}`,
+    "",
+    `Registrado el: ${new Date(p.registradoEn).toLocaleString("es-AR")}`,
+  ].join("\r\n");
+
+  return `mailto:${EMAIL_CONTROL_PAGOS}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+}
+
+function abrirMailPago(p) {
+  window.location.href = construirMailtoPago(p);
+}
+
 function onRegistrarPago() {
   if (!ultimoCalculo) return;
   const btn = $("btn-registrar-pago");
@@ -315,16 +365,18 @@ function onRegistrarPago() {
     estado.pagos = estado.pagos.filter((p) => p.periodo !== ultimoCalculo.periodo);
   }
 
-  estado.pagos.push({
+  const nuevoPago = {
     id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
     ...ultimoCalculo,
     registradoEn: new Date().toISOString(),
-  });
+  };
+  estado.pagos.push(nuevoPago);
 
   estado.pagos.sort((a, b) => a.periodo.localeCompare(b.periodo));
   guardarEstado();
   renderTablaPagos();
-  mostrarMensaje(`Pago de ${ultimoCalculo.periodo} registrado.`);
+  mostrarMensaje(`Pago de ${ultimoCalculo.periodo} registrado. Se abrió el mail de control.`);
+  abrirMailPago(nuevoPago);
 }
 
 function eliminarPago(id) {
@@ -355,10 +407,22 @@ function renderTablaPagos() {
       <td>${fmtMoneda(p.sueldoPagado)}</td>
       <td>${fmtMoneda(p.diferencia)}</td>
       <td>${registrado.toLocaleDateString("es-AR")}</td>
-      <td><button class="link-borrar" data-id="${p.id}">Eliminar</button></td>
+      <td>
+        <div class="acciones-fila">
+          <button class="link-mail" data-id="${p.id}">Mail</button>
+          <button class="link-borrar" data-id="${p.id}">Eliminar</button>
+        </div>
+      </td>
     `;
     tbody.appendChild(tr);
   }
+
+  tbody.querySelectorAll(".link-mail").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const pago = estado.pagos.find((p) => p.id === btn.dataset.id);
+      if (pago) abrirMailPago(pago);
+    });
+  });
 
   tbody.querySelectorAll(".link-borrar").forEach((btn) => {
     btn.addEventListener("click", () =>

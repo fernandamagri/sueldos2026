@@ -152,6 +152,19 @@ input[readonly] { background: #f0f2f4; color: var(--color-muted); }
   white-space: nowrap;
 }
 
+.link-mail {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.acciones-fila { display: flex; gap: 10px; }
+
 .btn-confirmando,
 .link-borrar.btn-confirmando {
   color: #fff;
