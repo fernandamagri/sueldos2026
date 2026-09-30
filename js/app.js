@@ -312,7 +312,7 @@ function nombreMesAnio(periodoAAAAMM) {
   return `${nombre.charAt(0).toUpperCase()}${nombre.slice(1)} ${anio}`;
 }
 
-function construirMailtoPago(p) {
+function construirDetallePago(p) {
   const periodoTexto = nombreMesAnio(p.periodo);
   const asunto = `Registro Pago Sueldos ${periodoTexto}`;
   const cuerpo = [
@@ -342,15 +342,50 @@ function construirMailtoPago(p) {
     "",
     `Registrado el: ${new Date(p.registradoEn).toLocaleString("es-AR")}`,
   ].join("\r\n");
+  return { asunto, cuerpo };
+}
 
+function construirMailtoPago(p) {
+  const { asunto, cuerpo } = construirDetallePago(p);
   return `mailto:${EMAIL_CONTROL_PAGOS}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
 }
 
-function abrirMailPago(p) {
-  window.location.href = construirMailtoPago(p);
+// Intenta abrir el cliente de correo y, además, copia el mail al portapapeles: algunos
+// navegadores o visores embebidos (como una vista previa) bloquean los enlaces mailto: por
+// seguridad y no hay forma de saber si funcionó, así que el portapapeles queda como respaldo.
+async function intentarAbrirMail(p) {
+  const { asunto, cuerpo } = construirDetallePago(p);
+  const textoParaCopiar = `Para: ${EMAIL_CONTROL_PAGOS}\nAsunto: ${asunto}\n\n${cuerpo}`;
+
+  let copiado = false;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(textoParaCopiar);
+      copiado = true;
+    }
+  } catch (e) {
+    copiado = false;
+  }
+
+  try {
+    window.location.href = construirMailtoPago(p);
+  } catch (e) {
+    // algunos visores embebidos bloquean mailto:; seguimos con el respaldo del portapapeles.
+  }
+
+  return copiado;
 }
 
-function onRegistrarPago() {
+async function abrirMailPago(p) {
+  const copiado = await intentarAbrirMail(p);
+  mostrarMensaje(
+    copiado
+      ? `Se intentó abrir tu correo para ${EMAIL_CONTROL_PAGOS} y se copió el mail al portapapeles por las dudas (pegalo en un mail nuevo si no se abrió solo).`
+      : `Se intentó abrir tu correo para ${EMAIL_CONTROL_PAGOS}. Si no pasó nada, tu navegador bloqueó el enlace; usá el botón "Mail" de la fila para reintentarlo.`
+  );
+}
+
+async function onRegistrarPago() {
   if (!ultimoCalculo) return;
   const btn = $("btn-registrar-pago");
 
@@ -375,8 +410,14 @@ function onRegistrarPago() {
   estado.pagos.sort((a, b) => a.periodo.localeCompare(b.periodo));
   guardarEstado();
   renderTablaPagos();
-  mostrarMensaje(`Pago de ${ultimoCalculo.periodo} registrado. Se abrió el mail de control.`);
-  abrirMailPago(nuevoPago);
+
+  const copiado = await intentarAbrirMail(nuevoPago);
+  mostrarMensaje(
+    `Pago de ${ultimoCalculo.periodo} registrado. ` +
+      (copiado
+        ? `Se intentó abrir tu correo y se copió el mail al portapapeles por las dudas.`
+        : `Se intentó abrir tu correo de control (${EMAIL_CONTROL_PAGOS}).`)
+  );
 }
 
 function eliminarPago(id) {
