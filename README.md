@@ -71,9 +71,13 @@ Pensada para una empleada que trabaja por hora y no vive en el domicilio
 1. **Datos de la empleada**: nombre, categoría (tareas generales, tareas
    específicas, asistencia y cuidado de personas, caseros/as o supervisor/a)
    y fecha de ingreso.
-2. **Parámetros**: % de antigüedad (1% por año, según Ley 26.844, calculado
-   con antigüedad computable recién desde el 1/9/2020) y una casilla
-   opcional para **retener el aporte jubilatorio personal** del sueldo.
+2. **Parámetros**: % de antigüedad (1% por año, según Ley 26.844) y una
+   casilla opcional para **retener el aporte jubilatorio personal** del
+   sueldo. Importante: la antigüedad de casas particulares es computable
+   recién desde el 1/9/2020 — si la empleada ingresó antes de esa fecha,
+   los años reconocidos se cuentan desde esa fecha y no desde su ingreso
+   real. La app muestra un aviso con los años reales y los reconocidos
+   cuando aplica, para que no parezca un error de cálculo.
    Por defecto la app **no** descuenta nada del sueldo de la empleada: el
    aporte y la contribución mensual que corresponde declarar y pagar a ARCA
    (jubilación + obra social + ART) es, salvo acuerdo en contrario, un costo

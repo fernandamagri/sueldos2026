@@ -121,18 +121,25 @@ function manejarClickConfirmable(btn, textoConfirmar, alConfirmar) {
   }
 }
 
+function aniosEntre(fechaInicioStr, periodoAAAAMM) {
+  if (!fechaInicioStr || !periodoAAAAMM) return 0;
+  const inicio = new Date(fechaInicioStr + "T00:00:00");
+  const [anio, mes] = periodoAAAAMM.split("-").map(Number);
+  const finPeriodo = new Date(anio, mes - 1, 1);
+  let anios = finPeriodo.getFullYear() - inicio.getFullYear();
+  const aunNoLlegoElMes =
+    finPeriodo.getMonth() < inicio.getMonth() ||
+    (finPeriodo.getMonth() === inicio.getMonth() && finPeriodo.getDate() < inicio.getDate());
+  if (aunNoLlegoElMes) anios -= 1;
+  return Math.max(0, anios);
+}
+
+// Años reconocidos por el régimen de antigüedad (Ley 26.844): si el ingreso fue antes del
+// 1/9/2020, el conteo arranca en esa fecha y no en la fecha real de ingreso.
 function calcularAniosAntiguedad(fechaIngreso, periodoAAAAMM) {
   if (!fechaIngreso || !periodoAAAAMM) return 0;
   const anclaIngreso = fechaIngreso < ANTIGUEDAD_FECHA_ANCLA ? ANTIGUEDAD_FECHA_ANCLA : fechaIngreso;
-  const ingreso = new Date(anclaIngreso + "T00:00:00");
-  const [anio, mes] = periodoAAAAMM.split("-").map(Number);
-  const finPeriodo = new Date(anio, mes - 1, 1);
-  let anios = finPeriodo.getFullYear() - ingreso.getFullYear();
-  const aunNoLlegoElMes =
-    finPeriodo.getMonth() < ingreso.getMonth() ||
-    (finPeriodo.getMonth() === ingreso.getMonth() && finPeriodo.getDate() < ingreso.getDate());
-  if (aunNoLlegoElMes) anios -= 1;
-  return Math.max(0, anios);
+  return aniosEntre(anclaIngreso, periodoAAAAMM);
 }
 
 function poblarFormulario() {
@@ -151,8 +158,20 @@ function poblarFormulario() {
 }
 
 function actualizarAniosAntiguedad() {
-  const anios = calcularAniosAntiguedad($("emp-ingreso").value, $("pago-periodo").value);
+  const fechaIngreso = $("emp-ingreso").value;
+  const periodo = $("pago-periodo").value;
+  const anios = calcularAniosAntiguedad(fechaIngreso, periodo);
   $("pago-antiguedad-anios").value = anios;
+
+  const info = $("antiguedad-info");
+  if (fechaIngreso && periodo && fechaIngreso < ANTIGUEDAD_FECHA_ANCLA) {
+    const aniosReales = aniosEntre(fechaIngreso, periodo);
+    info.textContent = `Trabaja con vos hace ${aniosReales} años, pero el adicional por antigüedad de Casas Particulares se cuenta recién desde el 1/9/2020 (Ley 26.844): por eso se reconocen ${anios} años para este cálculo. No es un error.`;
+    info.classList.remove("oculto");
+  } else {
+    info.textContent = "";
+    info.classList.add("oculto");
+  }
 }
 
 function sumaAdelantosPeriodo(periodo) {

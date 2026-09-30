@@ -50,6 +50,12 @@
       El valor hora y los aportes se actualizan periódicamente por resolución de la CNTCP / ARCA.
       Verificá siempre el valor vigente antes de liquidar un período.
     </p>
+    <p class="hint">
+      El adicional por antigüedad del personal de casas particulares (Ley 26.844) se computa recién
+      desde el 1° de septiembre de 2020: si la empleada ingresó antes de esa fecha, sus años de
+      antigüedad reconocidos se cuentan a partir de esa fecha y no desde su ingreso real. Por eso el
+      campo "Antigüedad (años)" puede mostrar un número menor a los años reales que trabaja con vos.
+    </p>
     <div class="grid grid-3">
       <label>% Antigüedad por año
         <input type="number" id="cfg-antiguedad" step="0.01" value="1">
@@ -151,6 +157,7 @@
     </div>
 
     <p id="sugerencia-valorhora-info" class="hint oculto"></p>
+    <p id="antiguedad-info" class="hint oculto"></p>
     <p id="adelantos-periodo-info" class="hint"></p>
 
     <button id="btn-calcular" class="btn btn-primary">Calcular</button>
