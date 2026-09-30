@@ -123,14 +123,13 @@ function manejarClickConfirmable(btn, textoConfirmar, alConfirmar) {
 
 function aniosEntre(fechaInicioStr, periodoAAAAMM) {
   if (!fechaInicioStr || !periodoAAAAMM) return 0;
-  const inicio = new Date(fechaInicioStr + "T00:00:00");
-  const [anio, mes] = periodoAAAAMM.split("-").map(Number);
-  const finPeriodo = new Date(anio, mes - 1, 1);
-  let anios = finPeriodo.getFullYear() - inicio.getFullYear();
-  const aunNoLlegoElMes =
-    finPeriodo.getMonth() < inicio.getMonth() ||
-    (finPeriodo.getMonth() === inicio.getMonth() && finPeriodo.getDate() < inicio.getDate());
-  if (aunNoLlegoElMes) anios -= 1;
+  // Comparación por mes, no por día: el período a liquidar es un mes completo, así que si
+  // ingresó en septiembre, el período de septiembre de un año posterior ya cuenta el año
+  // cumplido, sin importar el día exacto de ingreso dentro de ese mes.
+  const [anioInicio, mesInicio] = fechaInicioStr.split("-").map(Number);
+  const [anioPeriodo, mesPeriodo] = periodoAAAAMM.split("-").map(Number);
+  let anios = anioPeriodo - anioInicio;
+  if (mesPeriodo < mesInicio) anios -= 1;
   return Math.max(0, anios);
 }
 
