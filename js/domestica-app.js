@@ -22,6 +22,12 @@ const NOMBRES_MES = [
   "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
 ];
 
+// Completar con el Client ID de Google Cloud Console (OAuth 2.0 "Web application") para que
+// funcione "Cargar a Drive". Sin esto, el botón avisa que falta configurarlo.
+const GOOGLE_CLIENT_ID = "";
+const GOOGLE_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
+const CARPETA_DRIVE_NOMBRE = "Sueldos 2026";
+
 // Antigüedad computable recién desde el 1/9/2020, por Ley 26.844 (adicional vigente desde set-2021).
 const ANTIGUEDAD_FECHA_ANCLA = "2020-09-01";
 
@@ -427,6 +433,134 @@ async function abrirMailPago(p) {
   );
 }
 
+function generarPdfPago(p) {
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    throw new Error("No se pudo cargar la librería de PDF (jsPDF).");
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const { asunto, cuerpo } = construirDetallePago(p);
+
+  doc.setFontSize(14);
+  doc.text(asunto, 14, 18);
+  doc.setFontSize(10);
+
+  let y = 30;
+  for (const linea of cuerpo.split("\r\n")) {
+    if (y > 280) {
+      doc.addPage();
+      y = 20;
+    }
+    doc.text(linea || " ", 14, y);
+    y += 6;
+  }
+
+  return doc.output("blob");
+}
+
+let googleTokenClient = null;
+let googleAccessToken = null;
+
+function pedirTokenGoogle() {
+  return new Promise((resolve, reject) => {
+    if (!GOOGLE_CLIENT_ID) {
+      reject(new Error('Falta configurar el Client ID de Google (constante GOOGLE_CLIENT_ID en js/domestica-app.js).'));
+      return;
+    }
+    if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) {
+      reject(new Error("No se pudo cargar el inicio de sesión de Google. Probá recargar la página."));
+      return;
+    }
+    try {
+      if (!googleTokenClient) {
+        googleTokenClient = window.google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_CLIENT_ID,
+          scope: GOOGLE_DRIVE_SCOPE,
+          callback: () => {},
+        });
+      }
+      googleTokenClient.callback = (respuesta) => {
+        if (respuesta && respuesta.access_token) {
+          googleAccessToken = respuesta.access_token;
+          resolve(respuesta.access_token);
+        } else {
+          reject(new Error("No se obtuvo un token de acceso de Google."));
+        }
+      };
+      googleTokenClient.error_callback = (err) => reject(new Error(err?.message || "Inicio de sesión de Google cancelado."));
+      googleTokenClient.requestAccessToken({ prompt: googleAccessToken ? "" : "consent" });
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
+
+async function obtenerCarpetaDriveId(token) {
+  const query = encodeURIComponent(
+    `name='${CARPETA_DRIVE_NOMBRE}' and mimeType='application/vnd.google-apps.folder' and trashed=false`
+  );
+  const resBusqueda = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name)`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!resBusqueda.ok) throw new Error(`No se pudo buscar la carpeta en Drive (${resBusqueda.status}).`);
+  const dataBusqueda = await resBusqueda.json();
+  if (dataBusqueda.files && dataBusqueda.files.length > 0) {
+    return dataBusqueda.files[0].id;
+  }
+
+  const resCrear = await fetch("https://www.googleapis.com/drive/v3/files", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ name: CARPETA_DRIVE_NOMBRE, mimeType: "application/vnd.google-apps.folder" }),
+  });
+  if (!resCrear.ok) throw new Error(`No se pudo crear la carpeta en Drive (${resCrear.status}).`);
+  const dataCrear = await resCrear.json();
+  return dataCrear.id;
+}
+
+async function subirPdfADrive(pdfBlob, nombreArchivo) {
+  const token = await pedirTokenGoogle();
+  const folderId = await obtenerCarpetaDriveId(token);
+
+  const metadata = { name: nombreArchivo, parents: [folderId], mimeType: "application/pdf" };
+  const form = new FormData();
+  form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }));
+  form.append("file", pdfBlob);
+
+  const res = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  if (!res.ok) {
+    const texto = await res.text();
+    throw new Error(`Drive respondió ${res.status}: ${texto}`);
+  }
+  return res.json();
+}
+
+async function onCargarDrive() {
+  if (!ultimoPagoRegistrado) return;
+  const btn = $("btn-cargar-drive");
+  const textoOriginal = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Subiendo a Drive...";
+
+  try {
+    const pdfBlob = generarPdfPago(ultimoPagoRegistrado);
+    const periodoArchivo = nombreMesAnio(ultimoPagoRegistrado.periodo).replace(/\s+/g, "_");
+    const nombreArchivo = `CasasParticulares_${periodoArchivo}.pdf`;
+    await subirPdfADrive(pdfBlob, nombreArchivo);
+    mostrarMensaje(`PDF subido a Drive, carpeta "${CARPETA_DRIVE_NOMBRE}".`);
+  } catch (e) {
+    console.error(e);
+    mostrarMensaje(`No se pudo subir a Drive: ${e.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
+  }
+}
+
 async function onRegistrarPago() {
   if (!ultimoCalculo) return;
   const btn = $("btn-registrar-pago");
@@ -455,6 +589,7 @@ async function onRegistrarPago() {
 
   ultimoPagoRegistrado = nuevoPago;
   $("btn-enviar-mail").classList.remove("oculto");
+  $("btn-cargar-drive").classList.remove("oculto");
 
   const copiado = await copiarMailPago(nuevoPago);
   mostrarMensaje(
@@ -684,6 +819,7 @@ function init() {
   $("btn-enviar-mail").addEventListener("click", () => {
     if (ultimoPagoRegistrado) abrirMailPago(ultimoPagoRegistrado);
   });
+  $("btn-cargar-drive").addEventListener("click", onCargarDrive);
   $("btn-exportar").addEventListener("click", exportarCSV);
   $("btn-borrar-todo").addEventListener("click", () =>
     manejarClickConfirmable($("btn-borrar-todo"), "¿Seguro? Confirmar borrado", borrarTodoElRegistro)

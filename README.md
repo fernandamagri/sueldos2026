@@ -121,6 +121,51 @@ a copiar ese mail más adelante. Como la app no tiene backend, no puede
 enviar el mail 100% sola: esta es la forma más simple y segura de acercarse
 a eso sin necesitar cuentas ni configuración extra.
 
+## Cargar PDF a Google Drive
+
+Además del mail, cada calculadora tiene un botón **"Cargar a Drive"** que
+aparece al registrar un pago: genera un PDF con el detalle de esa
+liquidación (uno para Comercio, otro para Casas Particulares) y lo sube a
+una carpeta llamada **"Sueldos 2026"** en tu Google Drive (la crea si no
+existe). La primera vez te va a pedir iniciar sesión con tu cuenta de
+Google y dar permiso.
+
+**Esto requiere dos cosas que no vienen configuradas por defecto:**
+
+1. **Un sitio real donde abrir la app.** El inicio de sesión de Google y la
+   subida a Drive no funcionan dentro de una vista previa embebida (por
+   ejemplo, un link de artifact) — hace falta un sitio con una URL propia.
+   La forma más simple con este mismo repositorio es **GitHub Pages**:
+   - En GitHub, entrá a este repositorio → **Settings** → **Pages**.
+   - En "Source" elegí la rama que estés usando (por ejemplo
+     `claude/determined-maxwell-8k3k24`, o `main` si ya mergeaste) y
+     carpeta `/ (root)`.
+   - Guardá. GitHub te va a dar una URL del tipo
+     `https://<tu-usuario>.github.io/sueldos2026/` — esa es la que vas a
+     usar de ahora en más (podés ponerla en favoritos) para que
+     funcionen el mail, el PDF y Drive sin restricciones.
+
+2. **Un Client ID de Google** (OAuth 2.0), que hay que crear una sola vez
+   en Google Cloud Console y pegar en el código:
+   - Entrá a https://console.cloud.google.com/ y creá un proyecto nuevo
+     (por ejemplo, "Sueldos 2026").
+   - **APIs & Services → Library** → buscá "Google Drive API" → **Enable**.
+   - **APIs & Services → OAuth consent screen**: tipo "External", completá
+     el nombre de la app y tu email; en "Test users" agregá tu propio
+     email (así no hace falta que Google verifique la app).
+   - **APIs & Services → Credentials → Create Credentials → OAuth client
+     ID**, tipo "Web application". En "Authorized JavaScript origins"
+     agregá la URL de GitHub Pages del paso anterior (por ejemplo
+     `https://<tu-usuario>.github.io`).
+   - Copiá el **Client ID** generado (termina en
+     `.apps.googleusercontent.com`) y pegalo en la constante
+     `GOOGLE_CLIENT_ID` al principio de `js/app.js` y de
+     `js/domestica-app.js`.
+
+Sin el Client ID configurado, el botón "Cargar a Drive" genera el PDF
+igual pero avisa con un mensaje claro que falta ese paso, en vez de
+fallar en silencio.
+
 ## Eliminar filas
 
 Cualquier fila cargada (pagos registrados, adelantos, filas de la escala de
